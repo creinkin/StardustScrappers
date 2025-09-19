@@ -196,9 +196,9 @@
 </head>
 <body class="overflow-hidden">
     <!-- Splash Screen -->
-    <div id="splash-screen" class="absolute inset-0 z-[100] flex flex-col justify-center items-center gap-8 cursor-pointer">
-        <h1 class="font-orbitron text-5xl md:text-6xl font-black splash-title">STARDUST SCRAPPERS</h1>
-        <p class="text-xl text-purple-300 animate-pulse">[ TAP TO START ]</p>
+    <div id="splash-screen" class="absolute inset-0 z-[100] flex flex-col justify-center items-center gap-4 text-center cursor-pointer">
+        <h1 class="font-orbitron text-6xl md:text-7xl font-black splash-title leading-tight">STARDUST<br>SCRAPPERS</h1>
+        <p class="text-xl text-purple-300 animate-pulse mt-4">[ TAP TO START ]</p>
     </div>
 
     <div id="app-container" class="w-full h-screen max-w-lg mx-auto p-4 flex flex-col opacity-0 transition-opacity duration-500">
@@ -241,29 +241,31 @@
             
             <!-- Hangar Panel -->
             <div id="panel-hangar" class="hidden flex-grow flex flex-col overflow-hidden">
-                <div class="glass-panel p-4 flex-grow flex flex-col">
-                    <h2 class="font-orbitron text-2xl text-center mb-4">SHIP HANGAR</h2>
-                    <div class="grid grid-cols-3 gap-4 mb-4">
-                        <!-- Ship Stats -->
-                        <div class="col-span-1 flex flex-col gap-2 text-sm">
-                            <h3 class="font-semibold text-center mb-1">STATUS</h3>
-                            <p>HP: <span id="ship-hp" class="font-semibold text-green-400">100</span></p>
-                            <p>DMG: <span id="ship-dmg" class="font-semibold text-red-400">10</span></p>
-                            <p>Fire Rate: <span id="ship-firerate" class="font-semibold text-blue-400">5</span></p>
-                            <p>Speed: <span id="ship-speed" class="font-semibold text-yellow-400">2</span></p>
-                            <p>Cooling: <span id="ship-cooling" class="font-semibold text-cyan-400">5</span></p>
-                        </div>
+                <div class="glass-panel p-4 flex-grow flex flex-col overflow-hidden">
+                    <h2 class="font-orbitron text-2xl text-center mb-4 flex-shrink-0">SHIP HANGAR</h2>
+                    <div class="flex-grow overflow-y-auto py-2 pr-2">
+                        <div class="grid grid-cols-3 gap-4">
+                            <!-- Ship Stats -->
+                            <div class="col-span-1 flex flex-col gap-2 text-sm">
+                                <h3 class="font-semibold text-center mb-1">STATUS</h3>
+                                <p>HP: <span id="ship-hp" class="font-semibold text-green-400">100</span></p>
+                                <p>DMG: <span id="ship-dmg" class="font-semibold text-red-400">10</span></p>
+                                <p>Fire Rate: <span id="ship-firerate" class="font-semibold text-blue-400">5</span></p>
+                                <p>Speed: <span id="ship-speed" class="font-semibold text-yellow-400">2</span></p>
+                                <p>Cooling: <span id="ship-cooling" class="font-semibold text-cyan-400">5</span></p>
+                            </div>
 
-                        <!-- Equipped Items -->
-                        <div class="col-span-2 grid grid-cols-2 gap-2">
-                            <div id="equip-slot-weapon" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer"></div>
-                            <div id="equip-slot-shield" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer"></div>
-                            <div id="equip-slot-engine" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer"></div>
-                            <div id="equip-slot-tactic" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer"></div>
-                            <div id="equip-slot-special" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer col-span-2"></div>
+                            <!-- Equipped Items -->
+                            <div class="col-span-2 grid grid-cols-2 gap-2">
+                                <div id="equip-slot-weapon" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer"></div>
+                                <div id="equip-slot-shield" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer"></div>
+                                <div id="equip-slot-engine" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer"></div>
+                                <div id="equip-slot-tactic" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer"></div>
+                                <div id="equip-slot-special" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer col-span-2"></div>
+                            </div>
                         </div>
                     </div>
-                    <div class="mt-auto flex justify-around items-center">
+                    <div class="mt-auto flex justify-around items-center pt-4 flex-shrink-0">
                         <button id="inventory-button" class="btn-secondary font-orbitron px-4 py-2 rounded-lg">INVENTORY</button>
                         <button id="crafting-button" class="btn-secondary font-orbitron px-4 py-2 rounded-lg">CRAFTING</button>
                         <button id="reset-progress-button" class="btn-danger font-orbitron px-4 py-2 rounded-lg text-sm">RESET</button>
@@ -1235,7 +1237,9 @@
                 // Splash Screen
                 DOM.splashScreen.addEventListener('click', () => {
                     DOM.splashScreen.style.opacity = 0;
-                    DOM.splashScreen.style.pointerEvents = 'none';
+                    setTimeout(() => DOM.splashScreen.style.display = 'none', 500);
+                    
+                    DOM.appContainer.classList.add('fade-in');
                     DOM.appContainer.style.opacity = 1;
                     
                     // Start game logic only after splash is dismissed
