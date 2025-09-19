@@ -94,6 +94,18 @@
             border-radius: 4px;
             border: 1px solid var(--glow-color, #fff);
         }
+        .item-quantity {
+            position: absolute;
+            bottom: -2px;
+            left: -2px;
+            background-color: rgba(0,0,0,0.8);
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: bold;
+            padding: 1px 4px;
+            border-radius: 4px;
+            border: 1px solid #fff;
+        }
         .common { --glow-color: #9ca3af; border-color: #9ca3af; }
         .uncommon { --glow-color: #34d399; border-color: #34d399; }
         .rare { --glow-color: #3b82f6; border-color: #3b82f6; }
@@ -259,7 +271,7 @@
                             <div class="col-span-2 grid grid-cols-2 gap-2">
                                 <div id="equip-slot-weapon" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer"></div>
                                 <div id="equip-slot-shield" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer"></div>
-                                <div id="equip-slot-engine" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer"></div>
+                                <div id="equip-slot-core" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer"></div>
                                 <div id="equip-slot-tactic" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer"></div>
                                 <div id="equip-slot-special" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer col-span-2"></div>
                             </div>
@@ -383,7 +395,7 @@
         <div id="loot-modal" class="modal fixed inset-0 bg-black bg-opacity-70 justify-center items-center p-4">
             <div class="modal-content glass-panel p-6 rounded-lg w-full max-w-md text-center">
                 <h2 id="loot-modal-title" class="font-orbitron text-3xl mb-4"></h2>
-                <div id="loot-summary" class="mb-4">
+                <div id="loot-summary" class="mb-4 hidden">
                     <!-- Summary here -->
                 </div>
                 <h3 class="font-orbitron text-xl mt-4 mb-2">REWARDS</h3>
@@ -428,7 +440,7 @@
                     equipped: {
                         weapon: null,
                         shield: null,
-                        engine: null,
+                        core: null,
                         tactic: null,
                         special: null,
                     },
@@ -447,6 +459,7 @@
                     asteroids: [],
                     bullets: [],
                     particles: [],
+                    floatingTexts: [],
                     pendingLoot: [],
                     cooldownCharges: 0,
                     currentLevel: null,
@@ -496,7 +509,7 @@
                 equipSlots: {
                     weapon: $('#equip-slot-weapon'),
                     shield: $('#equip-slot-shield'),
-                    engine: $('#equip-slot-engine'),
+                    core: $('#equip-slot-core'),
                     tactic: $('#equip-slot-tactic'),
                     special: $('#equip-slot-special'),
                 },
@@ -632,7 +645,12 @@
                         G.player = { ...G.player, ...parsedData };
                         // Ensure nested equipped object exists
                         if (!G.player.equipped) {
-                            G.player.equipped = { weapon: null, shield: null, engine: null, tactic: null, special: null };
+                            G.player.equipped = { weapon: null, shield: null, core: null, tactic: null, special: null };
+                        }
+                        // Migration for old "engine" slot
+                        if (G.player.equipped.engine) {
+                            G.player.equipped.core = G.player.equipped.engine;
+                            delete G.player.equipped.engine;
                         }
                     }
                 } catch (e) {
@@ -658,12 +676,13 @@
                     s_004: { name: 'Aegis Barrier', type: 'shield', rarity: 'epic', icon: '💠', stats: { hp: 120 } },
                     s_005: { name: 'Guardian Shell', type: 'shield', rarity: 'legendary', icon: '⚜️', stats: { hp: 200 } },
 
-                    // ENGINES
-                    e_001: { name: 'Standard Thruster', type: 'engine', rarity: 'common', icon: '💨', stats: { speed: 0.5 } },
-                    e_002: { name: 'Augmented Thruster', type: 'engine', rarity: 'uncommon', icon: '💨', stats: { speed: 1 } },
-                    e_003: { name: 'Combat Engine', type: 'engine', rarity: 'rare', icon: '⚡️', stats: { speed: 1.5, cooling: 2 } },
-                    e_004: { name: 'Overdrive Engine', type: 'engine', rarity: 'epic', icon: '⚡️', stats: { speed: 2.5, cooling: 4 } },
-                    e_005: { name: 'Nova Drive', type: 'engine', rarity: 'legendary', icon: '✨', stats: { speed: 4, cooling: 8 } },
+                    // CORES (formerly engines)
+                    e_001: { name: 'Standard Core', type: 'core', rarity: 'common', icon: '⚙️', stats: { speed: 0.2, hp: 5 } },
+                    e_002: { name: 'Augmented Core', type: 'core', rarity: 'uncommon', icon: '⚙️', stats: { speed: 0.4, hp: 10 } },
+                    e_003: { name: 'Combat Core', type: 'core', rarity: 'rare', icon: '⚡️', stats: { speed: 0.6, cooling: 2, hp: 15 } },
+                    e_004: { name: 'Overdrive Core', type: 'core', rarity: 'epic', icon: '⚡️', stats: { speed: 0.8, cooling: 4, hp: 20 } },
+                    e_005: { name: 'Nova Drive Core', type: 'core', rarity: 'legendary', icon: '✨', stats: { speed: 1.2, cooling: 8, hp: 30 } },
+
 
                     // TACTICS
                     t_001: { name: 'Standard Protocol', type: 'tactic', rarity: 'common', icon: '📜', behavior: 'standard', description: 'A balanced combat approach, maintaining medium range.' },
@@ -680,7 +699,7 @@
                 G.recipes = {
                     'r_w_003': { id: 'r_w_003', name: 'Craft: Rapid Laser', resultItemId: 'w_003', cost: { coins: 500, materials: 50 }, component: { type: 'weapon', rarity: 'uncommon' } },
                     'r_s_003': { id: 'r_s_003', name: 'Craft: Energy Shield', resultItemId: 's_003', cost: { coins: 500, materials: 50 }, component: { type: 'shield', rarity: 'uncommon' } },
-                    'r_e_003': { id: 'r_e_003', name: 'Craft: Combat Engine', resultItemId: 'e_003', cost: { coins: 500, materials: 50 }, component: { type: 'engine', rarity: 'uncommon' } },
+                    'r_e_003': { id: 'r_e_003', name: 'Craft: Combat Core', resultItemId: 'e_003', cost: { coins: 500, materials: 50 }, component: { type: 'core', rarity: 'uncommon' } },
                     'r_w_004': { id: 'r_w_004', name: 'Craft: Heavy Cannon', resultItemId: 'w_004', cost: { coins: 2000, materials: 200 }, component: { type: 'weapon', rarity: 'rare' } },
                     'r_sp_001': { id: 'r_sp_001', name: 'Craft: EMP Burst', resultItemId: 'sp_001', cost: { coins: 2500, materials: 250 }, component: { type: 'tactic', rarity: 'uncommon' } },
                     'r_sp_002': { id: 'r_sp_002', name: 'Craft: Shield Overcharge', resultItemId: 'sp_002', cost: { coins: 5000, materials: 500 }, component: { type: 'shield', rarity: 'rare' } },
@@ -700,8 +719,6 @@
                             asteroidSpeed: 0.5 + i * 0.1,
                         },
                         rewards: {
-                            coinsPerWave: [10 * levelNum, 20 * levelNum],
-                            materialsPerWave: [1 * levelNum, 3 * levelNum],
                             lootTable: [
                                 { itemId: 'w_001', chance: 0.2 }, { itemId: 's_001', chance: 0.2 }, { itemId: 'e_001', chance: 0.2 },
                                 ...(levelNum > 1 ? [{ recipeId: 'r_sp_001', chance: 0.03 }] : []),
@@ -755,7 +772,7 @@
                 const baseStats = { hp: 100, damage: 10, fireRate: 2, speed: 2, cooling: 5, heatPerShot: 5 };
                 let finalStats = { ...baseStats };
 
-                for (const type of ['weapon', 'shield', 'engine']) {
+                for (const type of ['weapon', 'shield', 'core']) {
                     const item = G.player.equipped[type];
                     if (item && item.stats) {
                         for (const stat of Object.keys(item.stats)) {
@@ -779,6 +796,7 @@
             }
             
             function createItemCard(item, options = {}) {
+                const { quantity = 1 } = options;
                 const rarityData = G.RARITY_DATA[item.rarity];
                 const card = document.createElement('div');
                 card.className = `item-card p-2 rounded-lg border-2 w-full h-full flex items-center justify-center cursor-pointer ${rarityData.border}`;
@@ -791,6 +809,13 @@
                     levelTag.textContent = `L${item.level}`;
                     card.appendChild(levelTag);
                 }
+                
+                if (quantity > 1) {
+                    const quantityTag = document.createElement('div');
+                    quantityTag.className = 'item-quantity';
+                    quantityTag.textContent = `x${quantity}`;
+                    card.appendChild(quantityTag);
+                }
 
                 if (options.onClick) {
                     card.addEventListener('click', (e) => {
@@ -802,7 +827,7 @@
             }
 
             function updateEquippedUI() {
-                for (const type of ['weapon', 'shield', 'engine', 'tactic', 'special']) {
+                for (const type of ['weapon', 'shield', 'core', 'tactic', 'special']) {
                     const slot = DOM.equipSlots[type];
                     const item = G.player.equipped[type];
                     slot.innerHTML = '';
@@ -902,16 +927,29 @@
             DOM.inventoryModal.onOpen = () => {
                 const grid = DOM.inventoryModal.grid;
                 grid.innerHTML = '';
-                if (G.player.inventory.length === 0) {
+
+                const itemGroups = new Map();
+                G.player.inventory.forEach(item => {
+                    const key = `${item.id}_${item.level}`;
+                    if (!itemGroups.has(key)) {
+                        itemGroups.set(key, []);
+                    }
+                    itemGroups.get(key).push(item);
+                });
+
+                if (itemGroups.size === 0) {
                     grid.innerHTML = `<p class="col-span-4 text-center text-gray-400">Inventory is empty.</p>`;
                     return;
                 }
-                G.player.inventory.forEach(item => {
-                    const card = createItemCard(item, {
-                        onClick: () => openModal(DOM.itemModal, item, { isEquipped: false })
+
+                for (const group of itemGroups.values()) {
+                    const representativeItem = group[0];
+                    const card = createItemCard(representativeItem, {
+                        onClick: () => openModal(DOM.itemModal, representativeItem, { isEquipped: false }),
+                        quantity: group.length,
                     });
                     grid.appendChild(card);
-                });
+                }
             };
             
             DOM.itemModal.onOpen = (item, options) => {
@@ -956,14 +994,13 @@
                 const totalLoot = result.items.length;
 
                 DOM.lootModal.title.textContent = result.success ? "VICTORY" : "DEFEAT";
-                DOM.lootModal.summary.innerHTML = `
-                    <p>Coins Found: <span class="font-semibold text-yellow-400">+${result.coins}</span></p>
-                    <p>Materials Found: <span class="font-semibold text-green-400">+${result.materials}</span></p>
-                `;
+                DOM.lootModal.summary.classList.add('hidden'); // Hide old summary
+                
                 DOM.lootModal.grid.innerHTML = '';
                 DOM.lootModal.closeBtn.classList.add('opacity-0', 'pointer-events-none');
                 
                 if (totalLoot === 0) {
+                    DOM.lootModal.grid.innerHTML = `<p class="col-span-4 text-center text-gray-400">No items found.</p>`;
                     DOM.lootModal.closeBtn.classList.remove('opacity-0', 'pointer-events-none');
                     return;
                 }
@@ -1195,16 +1232,16 @@
                 const recipe = G.recipes[recipeId];
                 if (!recipe) return;
 
-                const componentItem = G.player.inventory.find(item => 
+                const componentItemIndex = G.player.inventory.findIndex(item => 
                     item.type === recipe.component.type && item.rarity === recipe.component.rarity
                 );
                 const hasCoins = G.player.coins >= recipe.cost.coins;
                 const hasMaterials = G.player.materials >= recipe.cost.materials;
 
-                if (componentItem && hasCoins && hasMaterials) {
+                if (componentItemIndex !== -1 && hasCoins && hasMaterials) {
                     G.player.coins -= recipe.cost.coins;
                     G.player.materials -= recipe.cost.materials;
-                    G.player.inventory = G.player.inventory.filter(item => item.uniqueId !== componentItem.uniqueId);
+                    G.player.inventory.splice(componentItemIndex, 1);
 
                     const newItem = { ...G.items[recipe.resultItemId], uniqueId: generateItemId(), level: 1 };
                     G.player.inventory.push(newItem);
@@ -1239,7 +1276,6 @@
                     DOM.splashScreen.style.opacity = 0;
                     setTimeout(() => DOM.splashScreen.style.display = 'none', 500);
                     
-                    DOM.appContainer.classList.add('fade-in');
                     DOM.appContainer.style.opacity = 1;
                     
                     // Start game logic only after splash is dismissed
@@ -1387,6 +1423,7 @@
                 G.game.asteroids = [];
                 G.game.bullets = [];
                 G.game.particles = [];
+                G.game.floatingTexts = [];
                 G.game.ship = null;
                 G.game.pendingLoot = { coins: 0, materials: 0, items: [] };
                 G.game.cooldownCharges = 2;
@@ -1409,15 +1446,9 @@
                 const level = G.game.currentLevel;
                 const waveNum = G.game.currentWave;
                 
-                // Add currency
-                G.game.pendingLoot.coins += Math.floor(Math.random() * (level.rewards.coinsPerWave[1] - level.rewards.coinsPerWave[0])) + level.rewards.coinsPerWave[0];
-                G.game.pendingLoot.materials += Math.floor(Math.random() * (level.rewards.materialsPerWave[1] - level.rewards.materialsPerWave[0])) + level.rewards.materialsPerWave[0];
-
-                // Roll for item/recipe
+                // Always generate an item for the wave crate.
                 const itemLoot = generateLoot(level, waveNum);
-                if (itemLoot) {
-                    G.game.pendingLoot.items.push(itemLoot);
-                }
+                G.game.pendingLoot.items.push(itemLoot);
             }
 
             function generateLoot(level, waveNum, isBonus = false) {
@@ -1436,11 +1467,15 @@
                                 const recipe = G.recipes[drop.recipeId];
                                 showToast(`New Recipe Unlocked: ${G.items[recipe.resultItemId].name}!`, 'success');
                             }
-                            return null; // Don't show recipes as physical items
+                            // If a recipe is found, we still want to drop a common item
+                            break;
                         }
                     }
                 }
-                return null;
+                // If no loot dropped from the table, guarantee a common item.
+                const commonItemPool = Object.keys(G.items).filter(id => G.items[id].rarity === 'common' && (G.items[id].type === 'weapon' || G.items[id].type === 'shield' || G.items[id].type === 'core'));
+                const randomCommonId = commonItemPool[Math.floor(Math.random() * commonItemPool.length)];
+                return { ...G.items[randomCommonId], uniqueId: generateItemId(), level: 1, isBonus };
             }
 
             function nextWave() {
@@ -1480,22 +1515,14 @@
                 if (isVictory) {
                     // Add bonus loot for clearing the level
                     const bonusLoot = generateLoot(G.game.currentLevel, G.game.currentWave, true);
-                    if (bonusLoot) {
-                        result.items.push(bonusLoot);
-                    }
+                    result.items.push(bonusLoot);
 
                     if (G.game.currentLevel.id === G.player.unlockedLevel && G.player.unlockedLevel < G.levels.length) {
                         G.player.unlockedLevel++;
                         showToast(`Sector ${G.player.unlockedLevel} unlocked!`, 'success');
                     }
-                } else {
-                    // Give smaller consolation prize on defeat
-                    result.coins = Math.floor(result.coins * 0.5);
-                    result.materials = Math.floor(result.materials * 0.5);
                 }
 
-                G.player.coins += result.coins;
-                G.player.materials += result.materials;
                 G.player.inventory.push(...result.items);
                 
                 updateAllUI();
@@ -1559,6 +1586,31 @@
                 canvas.height = canvas.clientHeight;
             }
             window.addEventListener('resize', resizeCanvas);
+
+            class FloatingText {
+                constructor(x, y, text, color) {
+                    this.x = x;
+                    this.y = y;
+                    this.text = text;
+                    this.color = color;
+                    this.lifespan = 60; // 1 second
+                    this.opacity = 1;
+                }
+                update() {
+                    this.y -= 0.5;
+                    this.lifespan--;
+                    this.opacity = this.lifespan / 60;
+                }
+                draw() {
+                    ctx.save();
+                    ctx.font = 'bold 14px Orbitron';
+                    ctx.fillStyle = this.color;
+                    ctx.globalAlpha = this.opacity;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(this.text, this.x, this.y);
+                    ctx.restore();
+                }
+            }
             
             class PlayerShip {
                 constructor(stats, tactic, special) {
@@ -1922,6 +1974,19 @@
                                 createExplosion(a.x, a.y, a.r, '#fff');
                                 const currentSpeed = Math.hypot(a.vel.x, a.vel.y);
                                 const currentAngle = Math.atan2(a.vel.y, a.vel.x);
+                                
+                                if (a.size === 'small') {
+                                    const coins = Math.floor(Math.random() * (G.game.currentLevel.id * 2)) + G.game.currentLevel.id;
+                                    const materials = Math.random() < 0.2 ? 1 : 0;
+                                    if (coins > 0) {
+                                        G.game.pendingLoot.coins += coins;
+                                        G.game.floatingTexts.push(new FloatingText(a.x, a.y, `+${coins}`, '#f59e0b'));
+                                    }
+                                    if (materials > 0) {
+                                        G.game.pendingLoot.materials += materials;
+                                        G.game.floatingTexts.push(new FloatingText(a.x, a.y + 15, `+${materials}`, '#34d399'));
+                                    }
+                                }
 
                                 if (a.size === 'large') {
                                     for (let k = 0; k < 2; k++) {
@@ -1991,9 +2056,11 @@
                 G.game.asteroids.forEach(a => a.update());
                 G.game.bullets.forEach(b => b.update());
                 G.game.particles.forEach(p => p.update());
+                G.game.floatingTexts.forEach(t => t.update());
                 
                 G.game.bullets = G.game.bullets.filter(b => b.lifespan > 0 && b.x > -10 && b.x < canvas.width + 10 && b.y > -10 && b.y < canvas.height + 10);
                 G.game.particles = G.game.particles.filter(p => p.lifespan > 0);
+                G.game.floatingTexts = G.game.floatingTexts.filter(t => t.lifespan > 0);
 
                 checkCollisions();
                 
@@ -2008,6 +2075,7 @@
                 G.game.asteroids.forEach(a => a.draw());
                 G.game.bullets.forEach(b => b.draw());
                 G.game.particles.forEach(p => p.draw());
+                G.game.floatingTexts.forEach(t => t.draw());
 
                 G.game.loopId = requestAnimationFrame(gameLoop);
             }
