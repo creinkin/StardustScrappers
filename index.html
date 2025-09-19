@@ -395,7 +395,7 @@
         <div id="loot-modal" class="modal fixed inset-0 bg-black bg-opacity-70 justify-center items-center p-4">
             <div class="modal-content glass-panel p-6 rounded-lg w-full max-w-md text-center">
                 <h2 id="loot-modal-title" class="font-orbitron text-3xl mb-4"></h2>
-                <div id="loot-summary" class="mb-4 hidden">
+                <div id="loot-summary" class="mb-4">
                     <!-- Summary here -->
                 </div>
                 <h3 class="font-orbitron text-xl mt-4 mb-2">REWARDS</h3>
@@ -999,7 +999,11 @@
                 const totalLoot = result.items.length;
 
                 DOM.lootModal.title.textContent = result.success ? "VICTORY" : "DEFEAT";
-                DOM.lootModal.summary.classList.add('hidden'); // Hide old summary
+                DOM.lootModal.summary.classList.remove('hidden');
+                 DOM.lootModal.summary.innerHTML = `
+                    <p>Coins Scrapped: <span class="font-semibold text-yellow-400">+${result.coins}</span></p>
+                    <p>Materials Salvaged: <span class="font-semibold text-green-400">+${result.materials}</span></p>
+                `;
                 
                 DOM.lootModal.grid.innerHTML = '';
                 DOM.lootModal.closeBtn.classList.add('opacity-0', 'pointer-events-none');
@@ -1527,7 +1531,10 @@
                         showToast(`Sector ${G.player.unlockedLevel} unlocked!`, 'success');
                     }
                 }
-
+                
+                // Add the collected currency to the player's main balance.
+                G.player.coins += result.coins;
+                G.player.materials += result.materials;
                 G.player.inventory.push(...result.items);
                 
                 updateAllUI();
@@ -1984,13 +1991,16 @@
                                     const coins = Math.floor(Math.random() * (G.game.currentLevel.id * 2)) + G.game.currentLevel.id;
                                     const materials = Math.random() < 0.2 ? 1 : 0;
                                     if (coins > 0) {
+                                        G.player.coins += coins;
                                         G.game.pendingLoot.coins += coins;
                                         G.game.floatingTexts.push(new FloatingText(a.x, a.y, `+${coins}`, '#f59e0b'));
                                     }
                                     if (materials > 0) {
+                                        G.player.materials += materials;
                                         G.game.pendingLoot.materials += materials;
                                         G.game.floatingTexts.push(new FloatingText(a.x, a.y + 15, `+${materials}`, '#34d399'));
                                     }
+                                    updateHeader();
                                 }
 
                                 if (a.size === 'large') {
@@ -2096,5 +2106,4 @@
     </script>
 </body>
 </html>
-
 
