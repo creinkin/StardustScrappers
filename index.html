@@ -696,6 +696,11 @@
                     sp_003: { name: 'Bullet Salvo', type: 'special', rarity: 'epic', icon: '🔭', description: 'Fires a wide salvo of 10 bullets.', chargeTime: 15, effect: 'bullet_salvo' },
                 };
 
+                // Add id to each item from its key for easier lookup
+                for (const id in G.items) {
+                    G.items[id].id = id;
+                }
+
                 G.recipes = {
                     'r_w_003': { id: 'r_w_003', name: 'Craft: Rapid Laser', resultItemId: 'w_003', cost: { coins: 500, materials: 50 }, component: { type: 'weapon', rarity: 'uncommon' } },
                     'r_s_003': { id: 'r_s_003', name: 'Craft: Energy Shield', resultItemId: 's_003', cost: { coins: 500, materials: 50 }, component: { type: 'shield', rarity: 'uncommon' } },
@@ -2091,4 +2096,5 @@
     </script>
 </body>
 </html>
+
 
