@@ -713,6 +713,10 @@
                     sp_001: { name: 'EMP Burst', type: 'special', rarity: 'rare', icon: '🎇', description: 'Discharges an energy wave, damaging all asteroids on screen.', chargeTime: 20, effect: 'emp_burst' },
                     sp_002: { name: 'Shield Overcharge', type: 'special', rarity: 'epic', icon: '🔋', description: 'Instantly restores 50% of your maximum health.', chargeTime: 30, effect: 'shield_overcharge' },
                     sp_003: { name: 'Bullet Salvo', type: 'special', rarity: 'epic', icon: '🔭', description: 'Fires a wide salvo of 10 bullets.', chargeTime: 15, effect: 'bullet_salvo' },
+                    
+                    // VIRTUAL ITEMS (for loot)
+                    m_001: { name: 'Material Cache', type: 'materials', rarity: 'uncommon', icon: '📦' },
+                    m_002: { name: 'Large Material Cache', type: 'materials', rarity: 'rare', icon: '🌟' }
                 };
 
                 // Add id to each item from its key for easier lookup
@@ -744,10 +748,12 @@
                         },
                         rewards: {
                             lootTable: [
+                                { itemId: 'm_001', chance: 0.15 },
                                 { itemId: 'w_001', chance: 0.2 }, { itemId: 's_001', chance: 0.2 }, { itemId: 'e_001', chance: 0.2 },
                                 ...(levelNum > 1 ? [{ recipeId: 'r_sp_001', chance: 0.03 }] : []),
                                 ...(levelNum > 2 ? [{ itemId: 'w_002', chance: 0.1 }, { itemId: 's_002', chance: 0.1 }, { itemId: 'e_002', chance: 0.1 }, { recipeId: 'r_w_003', chance: 0.05 }] : []),
                                 ...(levelNum > 3 ? [{ itemId: 't_002', chance: 0.08 }, { recipeId: 'r_s_003', chance: 0.05 }] : []),
+                                ...(levelNum > 4 ? [{ itemId: 'm_002', chance: 0.05 }] : []),
                                 ...(levelNum > 5 ? [{ itemId: 'w_003', chance: 0.05 }, { itemId: 's_003', chance: 0.05 }, { itemId: 'e_003', chance: 0.05 }, { recipeId: 'r_e_003', chance: 0.05 }] : []),
                                 ...(levelNum > 6 ? [{ itemId: 't_003', chance: 0.05 }, { recipeId: 'r_sp_002', chance: 0.02 }] : []),
                                 ...(levelNum > 8 ? [{ itemId: 'w_004', chance: 0.02 }, { itemId: 's_004', chance: 0.02 }, { itemId: 'e_004', chance: 0.02 }, { recipeId: 'r_w_004', chance: 0.03 }] : []),
@@ -993,8 +999,8 @@
                 DOM.itemModal.stats.classList.add('hidden');
                 DOM.itemModal.desc.classList.add('hidden');
 
-                if (item.type === 'tactic' || item.type === 'special') {
-                    DOM.itemModal.desc.textContent = item.description;
+                if (item.type === 'tactic' || item.type === 'special' || item.type === 'materials') {
+                    DOM.itemModal.desc.textContent = item.description || `A cache containing a stash of useful materials.`;
                     DOM.itemModal.desc.classList.remove('hidden');
                 } else {
                     DOM.itemModal.stats.classList.remove('hidden');
@@ -1007,9 +1013,9 @@
                     }
                 }
                 
-                DOM.itemModal.equipBtn.classList.toggle('hidden', options.isEquipped);
+                DOM.itemModal.equipBtn.classList.toggle('hidden', item.type === 'materials' || options.isEquipped);
                 DOM.itemModal.unequipBtn.classList.toggle('hidden', !options.isEquipped);
-                const canUpgrade = item.type !== 'tactic' && item.type !== 'special';
+                const canUpgrade = item.type !== 'tactic' && item.type !== 'special' && item.type !== 'materials';
                 DOM.itemModal.upgradeBtn.classList.toggle('hidden', !canUpgrade);
             };
 
@@ -1046,7 +1052,6 @@
                         
                         const card = createItemCard(item, {
                             onClick: () => {
-                               // No longer closes the loot modal, just opens the item modal on top.
                                openModal(DOM.itemModal, item, { isEquipped: false });
                             }
                         });
@@ -1688,7 +1693,19 @@
                     }
                 }
                 
-                G.player.inventory.push(...result.items);
+                const finalItemsToInventory = [];
+                result.items.forEach(item => {
+                    if (item.type === 'materials') {
+                        const amount = item.id === 'm_001' 
+                            ? (Math.floor(Math.random() * 5) + 5) * G.game.currentLevel.id 
+                            : (Math.floor(Math.random() * 10) + 15) * G.game.currentLevel.id;
+                        G.player.materials += amount;
+                        result.materials += amount; // This is for the summary screen
+                    } else {
+                        finalItemsToInventory.push(item);
+                    }
+                });
+                G.player.inventory.push(...finalItemsToInventory);
                 
                 updateAllUI();
                 openModal(DOM.lootModal, result);
@@ -2142,7 +2159,7 @@
                                 
                                 if (a.size === 'small') {
                                     const coins = Math.floor(Math.random() * (G.game.currentLevel.id * 2)) + G.game.currentLevel.id;
-                                    const materials = Math.random() < 0.2 ? 1 : 0;
+                                    const materials = Math.random() < 0.3 ? 1 : 0; // Increased chance
                                     if (coins > 0) {
                                         G.player.coins += coins;
                                         G.game.pendingLoot.coins += coins;
