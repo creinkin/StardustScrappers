@@ -375,19 +375,32 @@
         <!-- Crafting Modal -->
         <div id="crafting-modal" class="modal fixed inset-0 bg-black bg-opacity-70 justify-center items-center p-4">
             <div class="modal-content glass-panel p-6 rounded-lg w-full max-w-lg flex flex-col h-5/6">
-                <h2 class="font-orbitron text-3xl mb-4 text-center">CRAFTING STATION</h2>
+                <h2 class="font-orbitron text-3xl mb-4 text-center flex-shrink-0">CRAFTING STATION</h2>
+                <div class="flex-shrink-0 bg-black/20 rounded-lg p-1 flex justify-center mb-4">
+                    <button id="craft-tab-recipes" class="tab-btn active flex-1 text-center font-orbitron py-2 rounded-md">RECIPES</button>
+                    <button id="craft-tab-refine" class="tab-btn flex-1 text-center font-orbitron py-2 rounded-md">REFINE</button>
+                </div>
                 <div class="flex-grow flex gap-4 overflow-hidden">
-                    <!-- Recipe List -->
-                    <div id="recipe-list" class="w-1/3 flex flex-col gap-2 overflow-y-auto pr-2 border-r border-purple-500/50">
-                        <!-- Recipes populated by JS -->
+                    <!-- Recipe Panel -->
+                    <div id="craft-panel-recipes" class="w-full flex gap-4">
+                        <div id="recipe-list" class="w-1/3 flex flex-col gap-2 overflow-y-auto pr-2 border-r border-purple-500/50">
+                            <!-- Recipes populated by JS -->
+                        </div>
+                        <div id="recipe-details" class="w-2/3 flex flex-col items-center justify-center text-center">
+                            <p class="text-gray-400">Select a recipe to view details.</p>
+                        </div>
                     </div>
-                    <!-- Recipe Details -->
-                    <div id="recipe-details" class="w-2/3 flex flex-col items-center justify-center text-center">
-                        <p class="text-gray-400">Select a recipe to view details.</p>
-                        <!-- Details populated by JS -->
+                    <!-- Refine Panel -->
+                     <div id="craft-panel-refine" class="w-full flex gap-4 hidden">
+                        <div id="refine-list" class="w-1/3 flex flex-col gap-2 overflow-y-auto pr-2 border-r border-purple-500/50">
+                            <!-- Refine options populated by JS -->
+                        </div>
+                        <div id="refine-details" class="w-2/3 flex flex-col items-center justify-center text-center">
+                            <p class="text-gray-400">Select an item group to refine.</p>
+                        </div>
                     </div>
                 </div>
-                <button id="close-crafting-modal" class="btn-secondary mt-6 py-2 rounded-lg font-orbitron">CLOSE</button>
+                <button id="close-crafting-modal" class="btn-secondary mt-6 py-2 rounded-lg font-orbitron flex-shrink-0">CLOSE</button>
             </div>
         </div>
 
@@ -552,8 +565,14 @@
                 },
                 craftingModal: {
                     el: $('#crafting-modal'),
-                    list: $('#recipe-list'),
-                    details: $('#recipe-details'),
+                    tabRecipes: $('#craft-tab-recipes'),
+                    tabRefine: $('#craft-tab-refine'),
+                    panelRecipes: $('#craft-panel-recipes'),
+                    panelRefine: $('#craft-panel-refine'),
+                    recipeList: $('#recipe-list'),
+                    recipeDetails: $('#recipe-details'),
+                    refineList: $('#refine-list'),
+                    refineDetails: $('#refine-details'),
                     closeBtn: $('#close-crafting-modal'),
                 },
                 lootModal: {
@@ -1062,10 +1081,25 @@
 
 
             DOM.craftingModal.onOpen = () => {
+                switchCraftTab('recipes');
                 renderRecipeList();
-                DOM.craftingModal.details.innerHTML = `<p class="text-gray-400">Select a recipe to view details.</p>`;
+                renderRefineList();
             };
             
+            function switchCraftTab(tabName) {
+                if (tabName === 'recipes') {
+                    DOM.craftingModal.panelRecipes.classList.remove('hidden');
+                    DOM.craftingModal.panelRefine.classList.add('hidden');
+                    DOM.craftingModal.tabRecipes.classList.add('active');
+                    DOM.craftingModal.tabRefine.classList.remove('active');
+                } else { // refine
+                    DOM.craftingModal.panelRecipes.classList.add('hidden');
+                    DOM.craftingModal.panelRefine.classList.remove('hidden');
+                    DOM.craftingModal.tabRecipes.classList.remove('active');
+                    DOM.craftingModal.tabRefine.classList.add('active');
+                }
+            }
+
             DOM.upgradeModal.onOpen = (item) => {
                 renderUpgradeUI(item);
             };
@@ -1160,10 +1194,10 @@
 
             // --- CRAFTING UI & LOGIC ---
             function renderRecipeList() {
-                const list = DOM.craftingModal.list;
+                const list = DOM.craftingModal.recipeList;
                 list.innerHTML = '';
                 if (G.player.unlockedRecipes.length === 0) {
-                    list.innerHTML = `<p class="text-gray-400 text-sm">No recipes unlocked. Find them by playing levels.</p>`;
+                    list.innerHTML = `<p class="text-gray-400 text-sm">No recipes unlocked. Find them in loot crates.</p>`;
                     return;
                 }
                 G.player.unlockedRecipes.forEach(recipeId => {
@@ -1190,7 +1224,7 @@
             }
 
             function renderRecipeDetails(recipe) {
-                const details = DOM.craftingModal.details;
+                const details = DOM.craftingModal.recipeDetails;
                 const resultItem = G.items[recipe.resultItemId];
                 const rarityData = G.RARITY_DATA[resultItem.rarity];
 
@@ -1258,12 +1292,131 @@
                     showToast(`Crafted ${newItem.name}!`, 'success');
                     
                     updateAllUI();
-                    renderRecipeDetails(recipe);
+                    openModal(DOM.craftingModal);
                 } else {
                     showToast('Missing required components or resources!', 'error');
                 }
             }
             
+            function renderRefineList() {
+                 const list = DOM.craftingModal.refineList;
+                list.innerHTML = '';
+                const refinableGroups = getRefinableGroups();
+
+                if (refinableGroups.length === 0) {
+                    list.innerHTML = `<p class="text-gray-400 text-sm">You need at least 10 of the same item (type and level) to refine.</p>`;
+                    DOM.craftingModal.refineDetails.innerHTML = `<p class="text-gray-400">Select an item group to refine.</p>`;
+                    return;
+                }
+                
+                refinableGroups.forEach(group => {
+                    const item = group.item;
+                    const rarityData = G.RARITY_DATA[item.rarity];
+                    const groupEl = document.createElement('div');
+                    groupEl.className = `p-2 rounded-lg flex items-center gap-3 cursor-pointer border border-transparent hover:bg-purple-500/10 hover:border-purple-500/50`;
+                    groupEl.innerHTML = `
+                        <div class="item-card p-1 rounded border-2 ${rarityData.border} w-10 h-10 flex-shrink-0 flex items-center justify-center relative">
+                            <div class="text-lg">${item.icon}</div>
+                            <div class="item-quantity !-bottom-1 !-left-1 !text-[0.6rem] !px-1">${group.count}</div>
+                        </div>
+                        <span class="text-sm font-semibold">${item.name} L${item.level}</span>
+                    `;
+                     groupEl.addEventListener('click', () => {
+                        $$('#refine-list > div').forEach(el => el.classList.remove('bg-purple-500/20', 'border-purple-500/80'));
+                        groupEl.classList.add('bg-purple-500/20', 'border-purple-500/80');
+                        renderRefineDetails(group);
+                    });
+                    list.appendChild(groupEl);
+                });
+            }
+
+            function renderRefineDetails(group) {
+                const details = DOM.craftingModal.refineDetails;
+                const inputItem = group.item;
+                const currentRarityIndex = Object.keys(G.RARITY_DATA).indexOf(inputItem.rarity);
+                const nextRarity = Object.keys(G.RARITY_DATA)[currentRarityIndex + 1];
+                
+                if (!nextRarity) {
+                    details.innerHTML = `<p class="text-gray-400">This item is already at the highest rarity.</p>`;
+                    return;
+                }
+                
+                const outputItemId = inputItem.id.replace(/_00\d/, `_00${parseInt(inputItem.id.slice(-1)) + 1}`);
+                const outputItem = G.items[outputItemId] || { ...inputItem, name: `Upgraded ${inputItem.name}`, rarity: nextRarity };
+
+                const cost = {
+                    coins: 500 * (currentRarityIndex + 1) * inputItem.level,
+                    materials: 50 * (currentRarityIndex + 1) * inputItem.level
+                };
+                
+                const canRefine = group.count >= 10 && G.player.coins >= cost.coins && G.player.materials >= cost.materials;
+
+                details.innerHTML = `
+                    <h3 class="font-orbitron text-xl mb-4">REFINE: ${inputItem.name}</h3>
+                    <div class="flex items-center justify-center gap-4 mb-6">
+                         <div class="item-card p-2 rounded-lg border-2 ${G.RARITY_DATA[inputItem.rarity].border} w-20 h-20 flex-shrink-0 flex items-center justify-center relative">
+                             <div class="text-3xl">${inputItem.icon}</div>
+                             <div class="item-quantity">x10</div>
+                        </div>
+                        <span class="text-2xl font-orbitron text-purple-400">→</span>
+                        <div class="item-card p-2 rounded-lg border-2 ${G.RARITY_DATA[outputItem.rarity].border} w-20 h-20 flex-shrink-0 flex items-center justify-center">
+                             <div class="text-3xl">${outputItem.icon}</div>
+                        </div>
+                    </div>
+                    
+                    <h4 class="font-orbitron mt-6 mb-2">REQUIREMENTS</h4>
+                    <div class="w-full text-left bg-black/20 p-4 rounded-lg space-y-2">
+                        <p class="flex justify-between ${G.player.coins >= cost.coins ? 'text-green-400' : 'text-red-400'}">
+                            <span>Coins</span> <span>${G.player.coins} / ${cost.coins}</span></p>
+                        <p class="flex justify-between ${G.player.materials >= cost.materials ? 'text-green-400' : 'text-red-400'}">
+                            <span>Materials</span> <span>${G.player.materials} / ${cost.materials}</span></p>
+                        <p class="flex justify-between ${group.count >= 10 ? 'text-green-400' : 'text-red-400'}">
+                            <span>${inputItem.name} L${inputItem.level}</span> <span>${group.count} / 10</span></p>
+                    </div>
+                    <button id="refine-button" class="btn-primary w-full py-3 mt-6 rounded-lg font-orbitron text-lg" ${!canRefine ? 'disabled' : ''}>
+                        REFINE
+                    </button>
+                `;
+                if (!canRefine) {
+                    $('#refine-button').classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                     $('#refine-button').addEventListener('click', () => refineItem(group, outputItem, cost));
+                }
+            }
+
+            function getRefinableGroups() {
+                const itemGroups = new Map();
+                G.player.inventory.forEach(item => {
+                    if (item.type === 'tactic' || item.type === 'special' || item.rarity === 'legendary') return;
+                    const key = `${item.id}_${item.level}`;
+                    if (!itemGroups.has(key)) {
+                        itemGroups.set(key, { item: item, count: 0 });
+                    }
+                    itemGroups.get(key).count++;
+                });
+                return Array.from(itemGroups.values()).filter(group => group.count >= 10);
+            }
+            
+            function refineItem(group, outputItem, cost) {
+                G.player.coins -= cost.coins;
+                G.player.materials -= cost.materials;
+                
+                let removedCount = 0;
+                G.player.inventory = G.player.inventory.filter(item => {
+                    if (removedCount < 10 && item.id === group.item.id && item.level === group.item.level) {
+                        removedCount++;
+                        return false;
+                    }
+                    return true;
+                });
+
+                const newItem = { ...outputItem, uniqueId: generateItemId(), level: 1 };
+                G.player.inventory.push(newItem);
+
+                showToast(`Refined into ${newItem.name}!`, 'success');
+                openModal(DOM.craftingModal); // Re-opens to refresh list
+            }
+
             function switchTab(tabName) {
                 if (tabName === 'map') {
                     DOM.tabs.mapPanel.classList.remove('hidden');
@@ -1315,6 +1468,10 @@
                 DOM.tabs.mapBtn.addEventListener('click', () => switchTab('map'));
                 DOM.tabs.hangarBtn.addEventListener('click', () => switchTab('hangar'));
 
+                // Crafting Tabs
+                DOM.craftingModal.tabRecipes.addEventListener('click', () => switchCraftTab('recipes'));
+                DOM.craftingModal.tabRefine.addEventListener('click', () => switchCraftTab('refine'));
+
                 // Main Screen Buttons
                 DOM.inventoryButton.addEventListener('click', () => openModal(DOM.inventoryModal));
                 DOM.craftingButton.addEventListener('click', () => openModal(DOM.craftingModal));
@@ -1360,7 +1517,7 @@
                             G.player.inventory.push(oldItem);
                         }
                         G.player.equipped[item.type] = item;
-                        G.player.inventory = G.player.inventory.filter(i => i.uniqueId !== item.uniqueId);
+                        G.player.inventory.splice(G.player.inventory.findIndex(i => i.uniqueId === item.uniqueId), 1);
 
                         showToast(`${item.name} equipped!`, 'success');
                         closeAllModals();
@@ -1473,8 +1630,7 @@
                         if (drop.recipeId) {
                             if (!G.player.unlockedRecipes.includes(drop.recipeId)) {
                                 G.player.unlockedRecipes.push(drop.recipeId);
-                                const recipe = G.recipes[drop.recipeId];
-                                showToast(`New Recipe Unlocked: ${G.items[recipe.resultItemId].name}!`, 'success');
+                                showToast(`New Recipe Unlocked!`, 'success');
                             }
                             // If a recipe is found, we still want to drop a common item
                             break;
@@ -1532,9 +1688,6 @@
                     }
                 }
                 
-                // Add the collected currency to the player's main balance.
-                G.player.coins += result.coins;
-                G.player.materials += result.materials;
                 G.player.inventory.push(...result.items);
                 
                 updateAllUI();
