@@ -1,0 +1,2022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stardust Scrappers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Exo 2', sans-serif;
+            background-color: #0c0a18;
+            color: #e0e0e0;
+            overscroll-behavior: none;
+        }
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        .glass-panel {
+            background-color: rgba(23, 20, 48, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(118, 75, 224, 0.5);
+            border-radius: 1rem;
+        }
+        .btn-primary {
+            background-image: linear-gradient(to right, #8e2de2, #4a00e0);
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(142, 45, 226, 0.5);
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 0 25px rgba(142, 45, 226, 0.8);
+        }
+        .btn-secondary {
+            background-color: rgba(118, 75, 224, 0.2);
+            border: 1px solid #764be0;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background-color: rgba(118, 75, 224, 0.4);
+        }
+        .btn-danger {
+            background-color: rgba(220, 38, 38, 0.2);
+            border: 1px solid #dc2626;
+            transition: all 0.3s ease;
+        }
+        .btn-danger:hover {
+             background-color: rgba(220, 38, 38, 0.4);
+        }
+        .level-node {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .level-node.unlocked:hover {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 10px #f0f);
+        }
+        .level-node.locked {
+            filter: grayscale(1) brightness(0.5);
+            cursor: not-allowed;
+        }
+        .level-path {
+            stroke: #764be0;
+            stroke-dasharray: 5;
+            animation: dash 60s linear infinite;
+        }
+        @keyframes dash {
+            to {
+                stroke-dashoffset: 1000;
+            }
+        }
+        .item-slot.empty {
+            border-style: dashed;
+        }
+        .item-card {
+            transition: all 0.2s ease-in-out;
+            position: relative;
+        }
+        .item-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 0 15px var(--glow-color, #764be0);
+        }
+        .item-level {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background-color: rgba(0,0,0,0.8);
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: bold;
+            padding: 1px 4px;
+            border-radius: 4px;
+            border: 1px solid var(--glow-color, #fff);
+        }
+        .common { --glow-color: #9ca3af; border-color: #9ca3af; }
+        .uncommon { --glow-color: #34d399; border-color: #34d399; }
+        .rare { --glow-color: #3b82f6; border-color: #3b82f6; }
+        .epic { --glow-color: #a855f7; border-color: #a855f7; }
+        .legendary { --glow-color: #f59e0b; border-color: #f59e0b; }
+
+        /* Modal Animation */
+        .modal {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .modal.active {
+            display: flex;
+            opacity: 1;
+        }
+        .modal-content {
+            transform: scale(0.9);
+            opacity: 0;
+            transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+        }
+        .modal.active .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+        
+        /* Toast Notification */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s, transform 0.3s;
+            font-weight: 600;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .toast.success { background-color: rgba(22, 163, 74, 0.8); backdrop-filter: blur(5px); }
+        .toast.error { background-color: rgba(220, 38, 38, 0.8); backdrop-filter: blur(5px); }
+        
+        /* Tabs */
+        .tab-btn {
+            transition: all 0.2s ease-in-out;
+            color: #a3a3a3; /* neutral-400 */
+        }
+        .tab-btn.active {
+            background-color: rgba(118, 75, 224, 0.4);
+            color: #fff;
+            box-shadow: inset 0 0 10px rgba(118, 75, 224, 0.5);
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 10px #0ff; }
+            50% { box-shadow: 0 0 20px #0ff, 0 0 30px #0af; }
+        }
+        .special-ready {
+            animation: pulse-glow 1.5s infinite;
+        }
+        
+        @keyframes crate-glow {
+            0%, 100% { filter: drop-shadow(0 0 8px #fff) brightness(1.1); transform: scale(1); }
+            50% { filter: drop-shadow(0 0 15px #fff) brightness(1.3); transform: scale(1.05); }
+        }
+        .loot-crate {
+            animation: crate-glow 2s infinite ease-in-out;
+            transition: transform 0.3s, opacity 0.3s;
+        }
+        .loot-crate.opened {
+            animation: none;
+            transform: scale(0.95);
+            opacity: 0.5;
+        }
+
+        /* Splash Screen */
+        #splash-screen {
+            background: #0c0a18;
+            transition: opacity 0.5s ease-out;
+        }
+        @keyframes text-glow {
+            0%, 100% { text-shadow: 0 0 10px #fff, 0 0 20px #a855f7, 0 0 30px #a855f7; }
+            50% { text-shadow: 0 0 20px #fff, 0 0 30px #a855f7, 0 0 40px #a855f7; }
+        }
+        .splash-title {
+            animation: text-glow 2.5s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="overflow-hidden">
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="absolute inset-0 z-[100] flex flex-col justify-center items-center gap-8 cursor-pointer">
+        <h1 class="font-orbitron text-5xl md:text-6xl font-black splash-title">STARDUST SCRAPPERS</h1>
+        <p class="text-xl text-purple-300 animate-pulse">[ TAP TO START ]</p>
+    </div>
+
+    <div id="app-container" class="w-full h-screen max-w-lg mx-auto p-4 flex flex-col opacity-0 transition-opacity duration-500">
+
+        <!-- Header -->
+        <header class="glass-panel p-2 mb-4 flex justify-between items-center text-lg">
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3.5 4.5 1.1 1.2 2.3 2.3a1 1 0 0 0 1.4 0l5.5-5.5a1 1 0 0 1 1.4 0l5.5 5.5a1 1 0 0 0 1.4 0l2.3-2.3 1.1-1.2"/></svg>
+                    <span id="player-coins" class="font-orbitron">1000</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 1.9a7 7 0 0 0-5 2.2 7 7 0 0 0-2.2 5L3 12l1.9-1.9a7 7 0 0 1 2.2-5 7 7 0 0 1 5-2.2L12 3Z"/><path d="m12 21 1.9-1.9a7 7 0 0 0 5-2.2 7 7 0 0 0 2.2-5L21 12l-1.9 1.9a7 7 0 0 1-2.2 5 7 7 0 0 1-5 2.2L12 21Z"/></svg>
+                    <span id="player-materials" class="font-orbitron">100</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 text-xl relative">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-2"/><path d="M12 16v-2"/><path d="M12 8V6"/><path d="M15.5 12.5a3.5 3.5 0 0 0-5 0"/><path d="M17 16a6 6 0 0 0-8 0"/><path d="M18.5 19.5a8.5 8.5 0 0 0-11 0"/></svg>
+                <span id="player-energy" class="font-orbitron">100</span> / <span id="player-max-energy" class="font-orbitron">100</span>
+                 <div id="energy-timer" class="absolute -bottom-3 right-0 text-xs text-purple-300 font-mono whitespace-nowrap"></div>
+            </div>
+        </header>
+
+        <!-- Main Screen -->
+        <main id="main-screen" class="flex-grow flex flex-col gap-4 overflow-hidden">
+            <!-- Tabs -->
+            <div class="flex-shrink-0 bg-black/20 rounded-lg p-1 flex justify-center">
+                <button id="tab-map-btn" class="tab-btn active flex-1 text-center font-orbitron py-2 rounded-md">SECTOR MAP</button>
+                <button id="tab-hangar-btn" class="tab-btn flex-1 text-center font-orbitron py-2 rounded-md">HANGAR</button>
+            </div>
+        
+            <!-- Map Panel -->
+            <div id="panel-map" class="flex-grow flex flex-col overflow-hidden">
+                <div class="glass-panel flex-grow p-4 flex flex-col overflow-hidden">
+                    <div id="level-map-container" class="flex-grow overflow-auto">
+                        <!-- SVG map will be generated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Hangar Panel -->
+            <div id="panel-hangar" class="hidden flex-grow flex flex-col overflow-hidden">
+                <div class="glass-panel p-4 flex-grow flex flex-col">
+                    <h2 class="font-orbitron text-2xl text-center mb-4">SHIP HANGAR</h2>
+                    <div class="grid grid-cols-3 gap-4 mb-4">
+                        <!-- Ship Stats -->
+                        <div class="col-span-1 flex flex-col gap-2 text-sm">
+                            <h3 class="font-semibold text-center mb-1">STATUS</h3>
+                            <p>HP: <span id="ship-hp" class="font-semibold text-green-400">100</span></p>
+                            <p>DMG: <span id="ship-dmg" class="font-semibold text-red-400">10</span></p>
+                            <p>Fire Rate: <span id="ship-firerate" class="font-semibold text-blue-400">5</span></p>
+                            <p>Speed: <span id="ship-speed" class="font-semibold text-yellow-400">2</span></p>
+                            <p>Cooling: <span id="ship-cooling" class="font-semibold text-cyan-400">5</span></p>
+                        </div>
+
+                        <!-- Equipped Items -->
+                        <div class="col-span-2 grid grid-cols-2 gap-2">
+                            <div id="equip-slot-weapon" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer"></div>
+                            <div id="equip-slot-shield" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer"></div>
+                            <div id="equip-slot-engine" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer"></div>
+                            <div id="equip-slot-tactic" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer"></div>
+                            <div id="equip-slot-special" class="item-slot empty aspect-square border-2 border-gray-500 rounded-lg flex items-center justify-center cursor-pointer col-span-2"></div>
+                        </div>
+                    </div>
+                    <div class="mt-auto flex justify-around items-center">
+                        <button id="inventory-button" class="btn-secondary font-orbitron px-4 py-2 rounded-lg">INVENTORY</button>
+                        <button id="crafting-button" class="btn-secondary font-orbitron px-4 py-2 rounded-lg">CRAFTING</button>
+                        <button id="reset-progress-button" class="btn-danger font-orbitron px-4 py-2 rounded-lg text-sm">RESET</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="hidden flex-grow relative cursor-pointer">
+            <canvas id="game-canvas" class="w-full h-full rounded-lg border-2 border-purple-500"></canvas>
+            <div class="absolute top-2 left-2 text-white font-orbitron text-lg pointer-events-none">Level <span id="game-level-display">1</span></div>
+            <div class="absolute top-2 right-2 text-white font-orbitron text-lg pointer-events-none">Wave <span id="game-wave-display">1</span>/<span id="game-total-waves-display">3</span></div>
+             <div class="absolute bottom-4 left-0 right-0 w-full px-4 flex justify-center items-end gap-4 pointer-events-none">
+                <!-- Consumables -->
+                <div id="cooldown-button" class="bg-black/50 rounded-lg border border-cyan-500 p-2 flex flex-col items-center gap-1 cursor-pointer pointer-events-auto hover:bg-cyan-500/20 transition-colors">
+                    <span class="text-2xl">❄️</span>
+                    <span id="cooldown-charges" class="font-orbitron font-bold text-sm bg-black/50 rounded-full px-2">2</span>
+                </div>
+                
+                <!-- Status Bars -->
+                 <div class="w-3/4 max-w-xs flex flex-col gap-2">
+                    <div id="special-bar-container" class="w-full bg-black/50 rounded-full border border-gray-500 h-5 relative overflow-hidden">
+                        <div id="ship-special-bar" class="absolute top-0 left-0 h-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-300" style="width: 0%;"></div>
+                        <div id="special-bar-text" class="relative z-10 h-full flex items-center justify-center text-xs font-orbitron text-white/90 tracking-widest">SPECIAL</div>
+                    </div>
+                    <div class="w-full bg-black/50 rounded-full border border-gray-500 h-5 relative overflow-hidden">
+                        <div id="ship-hp-bar" class="absolute top-0 left-0 h-full bg-gradient-to-r from-green-400 to-green-600 transition-all duration-300" style="width: 100%;"></div>
+                        <div class="relative z-10 h-full flex items-center justify-center text-xs font-orbitron text-white/90 tracking-widest">HP</div>
+                    </div>
+                     <div id="heat-bar-container" class="w-full bg-black/50 rounded-full border border-gray-500 h-5 relative overflow-hidden">
+                        <div id="ship-heat-bar" class="absolute top-0 left-0 h-full bg-gradient-to-r from-orange-400 to-red-600 transition-all duration-300" style="width: 0%;"></div>
+                        <div id="heat-bar-text" class="relative z-10 h-full flex items-center justify-center text-xs font-orbitron text-white/90 tracking-widest">HEAT</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <!-- Level Details Modal -->
+        <div id="level-modal" class="modal fixed inset-0 bg-black bg-opacity-70 justify-center items-center p-4">
+            <div class="modal-content glass-panel p-6 rounded-lg w-full max-w-sm text-center">
+                <h2 id="level-modal-title" class="font-orbitron text-3xl mb-4"></h2>
+                <p class="mb-2">Energy Cost: <span id="level-modal-cost" class="font-semibold text-purple-400"></span></p>
+                <h3 class="font-orbitron text-xl mt-4 mb-2">Possible Drops</h3>
+                <div id="level-modal-drops" class="flex flex-wrap gap-2 justify-center text-sm">
+                    <!-- Drop items here -->
+                </div>
+                <div class="mt-6 flex gap-4">
+                    <button id="close-level-modal" class="btn-secondary w-full py-2 rounded-lg font-orbitron">CLOSE</button>
+                    <button id="start-level-button" class="btn-primary w-full py-2 rounded-lg font-orbitron">LAUNCH</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Inventory Modal -->
+        <div id="inventory-modal" class="modal fixed inset-0 bg-black bg-opacity-70 justify-center items-center p-4">
+            <div class="modal-content glass-panel p-6 rounded-lg w-full max-w-md flex flex-col h-3/4">
+                <h2 class="font-orbitron text-3xl mb-4 text-center">INVENTORY</h2>
+                <div id="inventory-grid" class="flex-grow grid grid-cols-4 gap-4 overflow-y-auto pr-2">
+                    <!-- Inventory items here -->
+                </div>
+                <button id="close-inventory-modal" class="btn-secondary mt-6 py-2 rounded-lg font-orbitron">CLOSE</button>
+            </div>
+        </div>
+
+        <!-- Item Details Modal -->
+        <div id="item-modal" class="modal fixed inset-0 bg-black bg-opacity-70 justify-center items-center p-4 z-50">
+            <div class="modal-content glass-panel p-6 rounded-lg w-full max-w-sm text-center">
+                 <div id="item-modal-card" class="item-card p-2 rounded-lg border-2 w-24 h-24 mx-auto mb-4 flex items-center justify-center">
+                    <div id="item-modal-icon" class="text-4xl"></div>
+                 </div>
+                <h2 id="item-modal-name" class="font-orbitron text-2xl mb-2"></h2>
+                <p id="item-modal-rarity" class="mb-4 text-lg font-semibold"></p>
+                <div id="item-modal-stats" class="text-left space-y-1 mb-6"></div>
+                <div id="item-modal-desc" class="text-center text-gray-300 mb-6"></div>
+                <div class="flex flex-col gap-4">
+                     <button id="item-modal-upgrade" class="btn-secondary w-full py-2 rounded-lg font-orbitron">UPGRADE</button>
+                    <div class="flex gap-4">
+                        <button id="item-modal-close" class="btn-secondary w-full py-2 rounded-lg font-orbitron">CLOSE</button>
+                        <button id="item-modal-equip" class="btn-primary w-full py-2 rounded-lg font-orbitron">EQUIP</button>
+                        <button id="item-modal-unequip" class="btn-primary w-full py-2 rounded-lg font-orbitron hidden">UNEQUIP</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Upgrade Modal -->
+        <div id="upgrade-modal" class="modal fixed inset-0 bg-black bg-opacity-80 justify-center items-center p-4 z-[60]">
+            <div id="upgrade-modal-content" class="modal-content glass-panel p-6 rounded-lg w-full max-w-md text-center">
+                 <!-- Content generated by JS -->
+            </div>
+        </div>
+
+        <!-- Crafting Modal -->
+        <div id="crafting-modal" class="modal fixed inset-0 bg-black bg-opacity-70 justify-center items-center p-4">
+            <div class="modal-content glass-panel p-6 rounded-lg w-full max-w-lg flex flex-col h-5/6">
+                <h2 class="font-orbitron text-3xl mb-4 text-center">CRAFTING STATION</h2>
+                <div class="flex-grow flex gap-4 overflow-hidden">
+                    <!-- Recipe List -->
+                    <div id="recipe-list" class="w-1/3 flex flex-col gap-2 overflow-y-auto pr-2 border-r border-purple-500/50">
+                        <!-- Recipes populated by JS -->
+                    </div>
+                    <!-- Recipe Details -->
+                    <div id="recipe-details" class="w-2/3 flex flex-col items-center justify-center text-center">
+                        <p class="text-gray-400">Select a recipe to view details.</p>
+                        <!-- Details populated by JS -->
+                    </div>
+                </div>
+                <button id="close-crafting-modal" class="btn-secondary mt-6 py-2 rounded-lg font-orbitron">CLOSE</button>
+            </div>
+        </div>
+
+        <!-- Loot Screen Modal -->
+        <div id="loot-modal" class="modal fixed inset-0 bg-black bg-opacity-70 justify-center items-center p-4">
+            <div class="modal-content glass-panel p-6 rounded-lg w-full max-w-md text-center">
+                <h2 id="loot-modal-title" class="font-orbitron text-3xl mb-4"></h2>
+                <div id="loot-summary" class="mb-4">
+                    <!-- Summary here -->
+                </div>
+                <h3 class="font-orbitron text-xl mt-4 mb-2">REWARDS</h3>
+                <div id="loot-grid" class="grid grid-cols-4 gap-4">
+                    <!-- Loot crates here -->
+                </div>
+                <button id="close-loot-modal" class="btn-primary mt-6 py-2 rounded-lg font-orbitron w-full opacity-0 pointer-events-none transition-opacity">CONTINUE</button>
+            </div>
+        </div>
+        
+        <!-- Confirm Modal -->
+        <div id="confirm-modal" class="modal fixed inset-0 bg-black bg-opacity-70 justify-center items-center p-4 z-[70]">
+            <div class="modal-content glass-panel p-6 rounded-lg w-full max-w-sm text-center">
+                <h2 id="confirm-modal-title" class="font-orbitron text-2xl mb-4">ARE YOU SURE?</h2>
+                <p id="confirm-modal-text" class="text-gray-300 mb-6">This action cannot be undone.</p>
+                <div class="flex gap-4">
+                    <button id="confirm-modal-cancel" class="btn-secondary w-full py-2 rounded-lg font-orbitron">CANCEL</button>
+                    <button id="confirm-modal-confirm" class="btn-danger w-full py-2 rounded-lg font-orbitron">CONFIRM</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    
+    <div id="toast-container"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- GAME CONFIG & STATE ---
+            const G = {
+                // Player Data
+                player: {
+                    coins: 1000,
+                    materials: 100,
+                    energy: 100,
+                    maxEnergy: 100,
+                    unlockedLevel: 1,
+                    lastEnergyTimestamp: null,
+                    inventory: [],
+                    unlockedRecipes: [],
+                    equipped: {
+                        weapon: null,
+                        shield: null,
+                        engine: null,
+                        tactic: null,
+                        special: null,
+                    },
+                },
+                // Game Definitions
+                items: {}, // DB for all items
+                recipes: {}, // Crafting recipes
+                levels: [], // Level definitions
+                // UI State
+                activeModals: [],
+                // Game Loop State
+                game: {
+                    isActive: false,
+                    ctx: null,
+                    ship: null,
+                    asteroids: [],
+                    bullets: [],
+                    particles: [],
+                    pendingLoot: [],
+                    cooldownCharges: 0,
+                    currentLevel: null,
+                    currentWave: 0,
+                    loopId: null,
+                },
+                // Constants
+                RARITY_DATA: {
+                    common: { name: "Common", color: "text-gray-400", border: "common", maxLevel: 3 },
+                    uncommon: { name: "Uncommon", color: "text-green-400", border: "uncommon", maxLevel: 5 },
+                    rare: { name: "Rare", color: "text-blue-400", border: "rare", maxLevel: 7 },
+                    epic: { name: "Epic", color: "text-purple-400", border: "epic", maxLevel: 10 },
+                    legendary: { name: "Legendary", color: "text-yellow-400", border: "legendary", maxLevel: 10 },
+                },
+                LEVEL_UP_MOD: 0.1, // 10% stat increase per level
+            };
+
+            // --- DOM ELEMENTS ---
+            const $ = (selector) => document.querySelector(selector);
+            const $$ = (selector) => document.querySelectorAll(selector);
+
+            const DOM = {
+                // Screens
+                splashScreen: $('#splash-screen'),
+                appContainer: $('#app-container'),
+                mainScreen: $('#main-screen'),
+                gameScreen: $('#game-screen'),
+                // Header
+                coins: $('#player-coins'),
+                materials: $('#player-materials'),
+                energy: $('#player-energy'),
+                maxEnergy: $('#player-max-energy'),
+                energyTimer: $('#energy-timer'),
+                // Tabs
+                tabs: {
+                    mapBtn: $('#tab-map-btn'),
+                    hangarBtn: $('#tab-hangar-btn'),
+                    mapPanel: $('#panel-map'),
+                    hangarPanel: $('#panel-hangar'),
+                },
+                // Ship Hangar
+                shipHp: $('#ship-hp'),
+                shipDmg: $('#ship-dmg'),
+                shipFirerate: $('#ship-firerate'),
+                shipSpeed: $('#ship-speed'),
+                shipCooling: $('#ship-cooling'),
+                equipSlots: {
+                    weapon: $('#equip-slot-weapon'),
+                    shield: $('#equip-slot-shield'),
+                    engine: $('#equip-slot-engine'),
+                    tactic: $('#equip-slot-tactic'),
+                    special: $('#equip-slot-special'),
+                },
+                // Buttons
+                inventoryButton: $('#inventory-button'),
+                craftingButton: $('#crafting-button'),
+                resetProgressButton: $('#reset-progress-button'),
+                // Level Map
+                levelMapContainer: $('#level-map-container'),
+                // Modals
+                levelModal: {
+                    el: $('#level-modal'),
+                    title: $('#level-modal-title'),
+                    cost: $('#level-modal-cost'),
+                    drops: $('#level-modal-drops'),
+                    closeBtn: $('#close-level-modal'),
+                    startBtn: $('#start-level-button'),
+                },
+                inventoryModal: {
+                    el: $('#inventory-modal'),
+                    grid: $('#inventory-grid'),
+                    closeBtn: $('#close-inventory-modal'),
+                },
+                itemModal: {
+                    el: $('#item-modal'),
+                    card: $('#item-modal-card'),
+                    icon: $('#item-modal-icon'),
+                    name: $('#item-modal-name'),
+                    rarity: $('#item-modal-rarity'),
+                    stats: $('#item-modal-stats'),
+                    desc: $('#item-modal-desc'),
+                    closeBtn: $('#item-modal-close'),
+                    equipBtn: $('#item-modal-equip'),
+                    unequipBtn: $('#item-modal-unequip'),
+                    upgradeBtn: $('#item-modal-upgrade'),
+                },
+                 upgradeModal: {
+                    el: $('#upgrade-modal'),
+                    content: $('#upgrade-modal-content'),
+                },
+                craftingModal: {
+                    el: $('#crafting-modal'),
+                    list: $('#recipe-list'),
+                    details: $('#recipe-details'),
+                    closeBtn: $('#close-crafting-modal'),
+                },
+                lootModal: {
+                    el: $('#loot-modal'),
+                    title: $('#loot-modal-title'),
+                    summary: $('#loot-summary'),
+                    grid: $('#loot-grid'),
+                    closeBtn: $('#close-loot-modal'),
+                },
+                confirmModal: {
+                    el: $('#confirm-modal'),
+                    title: $('#confirm-modal-title'),
+                    text: $('#confirm-modal-text'),
+                    cancelBtn: $('#confirm-modal-cancel'),
+                    confirmBtn: $('#confirm-modal-confirm'),
+                },
+                // Game Canvas
+                canvas: $('#game-canvas'),
+                gameLevel: $('#game-level-display'),
+                gameWave: $('#game-wave-display'),
+                gameTotalWaves: $('#game-total-waves-display'),
+                shipHpBar: $('#ship-hp-bar'),
+                shipHeatBar: $('#ship-heat-bar'),
+                heatBarContainer: $('#heat-bar-container'),
+                heatBarText: $('#heat-bar-text'),
+                specialBarContainer: $('#special-bar-container'),
+                shipSpecialBar: $('#ship-special-bar'),
+                specialBarText: $('#special-bar-text'),
+                cooldownButton: $('#cooldown-button'),
+                cooldownCharges: $('#cooldown-charges'),
+            };
+
+            // --- CONSTANTS ---
+            const ENERGY_REGEN_RATE_SECONDS = 300; // 5 minutes per energy
+            const ENERGY_TICKER_INTERVAL = 1000; // 1 second
+            const WAVE_LOOT_MODIFIER = 0.08; // 8% better loot chance per wave
+
+            // --- UTILITY FUNCTIONS ---
+            const showToast = (message, type = 'success') => {
+                const container = $('#toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                container.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.classList.add('show');
+                }, 10);
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            };
+
+            const openModal = (modal, ...args) => {
+                modal.el.classList.add('active');
+                G.activeModals.push(modal.el);
+                if (modal.onOpen) modal.onOpen(...args);
+            };
+
+            const closeModal = (modal) => {
+                modal.el.classList.remove('active');
+                G.activeModals = G.activeModals.filter(m => m !== modal.el);
+            };
+
+            const closeAllModals = () => {
+                G.activeModals.forEach(m => m.classList.remove('active'));
+                G.activeModals = [];
+            };
+
+            const generateItemId = () => `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+            // --- SAVE/LOAD ---
+            function saveGame() {
+                try {
+                    localStorage.setItem('stardustScrappersSave', JSON.stringify(G.player));
+                } catch (e) {
+                    console.error("Failed to save game state:", e);
+                }
+            }
+
+            function loadGame() {
+                try {
+                    const savedData = localStorage.getItem('stardustScrappersSave');
+                    if (savedData) {
+                        const parsedData = JSON.parse(savedData);
+                        // A simple merge to prevent breaking if new properties are added to default state
+                        G.player = { ...G.player, ...parsedData };
+                        // Ensure nested equipped object exists
+                        if (!G.player.equipped) {
+                            G.player.equipped = { weapon: null, shield: null, engine: null, tactic: null, special: null };
+                        }
+                    }
+                } catch (e) {
+                    console.error("Failed to load game state:", e);
+                }
+            }
+            
+            // --- DATA INITIALIZATION ---
+            function initializeData() {
+                // Item Definitions (DB)
+                G.items = {
+                    // WEAPONS
+                    w_001: { name: 'Basic Laser', type: 'weapon', rarity: 'common', icon: '☄️', stats: { damage: 2, fireRate: 1, heat: 5 } },
+                    w_002: { name: 'Dual Laser', type: 'weapon', rarity: 'uncommon', icon: '☄️', stats: { damage: 3, fireRate: 2, heat: 7 } },
+                    w_003: { name: 'Rapid Laser', type: 'weapon', rarity: 'rare', icon: '☄️', stats: { damage: 2, fireRate: 5, heat: 4, cooling: 5 } },
+                    w_004: { name: 'Heavy Cannon', type: 'weapon', rarity: 'epic', icon: '💥', stats: { damage: 10, fireRate: -2, heat: 20, cooling: -2 } },
+                    w_005: { name: 'Star Piercer', type: 'weapon', rarity: 'legendary', icon: '🌟', stats: { damage: 8, fireRate: 4, heat: 8, cooling: 10 } },
+                    
+                    // SHIELDS
+                    s_001: { name: 'Light Plating', type: 'shield', rarity: 'common', icon: '🛡️', stats: { hp: 20 } },
+                    s_002: { name: 'Reinforced Plating', type: 'shield', rarity: 'uncommon', icon: '🛡️', stats: { hp: 40 } },
+                    s_003: { name: 'Energy Shield', type: 'shield', rarity: 'rare', icon: '💠', stats: { hp: 70 } },
+                    s_004: { name: 'Aegis Barrier', type: 'shield', rarity: 'epic', icon: '💠', stats: { hp: 120 } },
+                    s_005: { name: 'Guardian Shell', type: 'shield', rarity: 'legendary', icon: '⚜️', stats: { hp: 200 } },
+
+                    // ENGINES
+                    e_001: { name: 'Standard Thruster', type: 'engine', rarity: 'common', icon: '💨', stats: { speed: 0.5 } },
+                    e_002: { name: 'Augmented Thruster', type: 'engine', rarity: 'uncommon', icon: '💨', stats: { speed: 1 } },
+                    e_003: { name: 'Combat Engine', type: 'engine', rarity: 'rare', icon: '⚡️', stats: { speed: 1.5, cooling: 2 } },
+                    e_004: { name: 'Overdrive Engine', type: 'engine', rarity: 'epic', icon: '⚡️', stats: { speed: 2.5, cooling: 4 } },
+                    e_005: { name: 'Nova Drive', type: 'engine', rarity: 'legendary', icon: '✨', stats: { speed: 4, cooling: 8 } },
+
+                    // TACTICS
+                    t_001: { name: 'Standard Protocol', type: 'tactic', rarity: 'common', icon: '📜', behavior: 'standard', description: 'A balanced combat approach, maintaining medium range.' },
+                    t_002: { name: 'Aggressor Protocol', type: 'tactic', rarity: 'uncommon', icon: '⚔️', behavior: 'aggressive', description: 'Closes the distance to engage targets at close range.' },
+                    t_003: { name: 'Evasive Maneuvers', type: 'tactic', rarity: 'rare', icon: '🌀', behavior: 'evasive', description: 'Keeps maximum distance from targets, prioritizing survival.' },
+                    
+                    // SPECIALS
+                    sp_000: { name: 'Kinetic Repulsor', type: 'special', rarity: 'common', icon: '✋', description: 'Emits a short-range kinetic wave from the ship\'s nose, pushing asteroids away.', chargeTime: 10, effect: 'repel' },
+                    sp_001: { name: 'EMP Burst', type: 'special', rarity: 'rare', icon: '🎇', description: 'Discharges an energy wave, damaging all asteroids on screen.', chargeTime: 20, effect: 'emp_burst' },
+                    sp_002: { name: 'Shield Overcharge', type: 'special', rarity: 'epic', icon: '🔋', description: 'Instantly restores 50% of your maximum health.', chargeTime: 30, effect: 'shield_overcharge' },
+                    sp_003: { name: 'Bullet Salvo', type: 'special', rarity: 'epic', icon: '🔭', description: 'Fires a wide salvo of 10 bullets.', chargeTime: 15, effect: 'bullet_salvo' },
+                };
+
+                G.recipes = {
+                    'r_w_003': { id: 'r_w_003', name: 'Craft: Rapid Laser', resultItemId: 'w_003', cost: { coins: 500, materials: 50 }, component: { type: 'weapon', rarity: 'uncommon' } },
+                    'r_s_003': { id: 'r_s_003', name: 'Craft: Energy Shield', resultItemId: 's_003', cost: { coins: 500, materials: 50 }, component: { type: 'shield', rarity: 'uncommon' } },
+                    'r_e_003': { id: 'r_e_003', name: 'Craft: Combat Engine', resultItemId: 'e_003', cost: { coins: 500, materials: 50 }, component: { type: 'engine', rarity: 'uncommon' } },
+                    'r_w_004': { id: 'r_w_004', name: 'Craft: Heavy Cannon', resultItemId: 'w_004', cost: { coins: 2000, materials: 200 }, component: { type: 'weapon', rarity: 'rare' } },
+                    'r_sp_001': { id: 'r_sp_001', name: 'Craft: EMP Burst', resultItemId: 'sp_001', cost: { coins: 2500, materials: 250 }, component: { type: 'tactic', rarity: 'uncommon' } },
+                    'r_sp_002': { id: 'r_sp_002', name: 'Craft: Shield Overcharge', resultItemId: 'sp_002', cost: { coins: 5000, materials: 500 }, component: { type: 'shield', rarity: 'rare' } },
+                };
+
+                // Level Definitions
+                G.levels = Array.from({ length: 10 }, (_, i) => {
+                    const levelNum = i + 1;
+                    const level = {
+                        id: levelNum,
+                        name: `Sector ${levelNum}`,
+                        energyCost: 5 + Math.floor(i / 2) * 2,
+                        waves: 3 + Math.floor(i / 3),
+                        waveConfig: {
+                            asteroids: 3 + i,
+                            asteroidHp: 10 + i * 5,
+                            asteroidSpeed: 0.5 + i * 0.1,
+                        },
+                        rewards: {
+                            coinsPerWave: [10 * levelNum, 20 * levelNum],
+                            materialsPerWave: [1 * levelNum, 3 * levelNum],
+                            lootTable: [
+                                { itemId: 'w_001', chance: 0.2 }, { itemId: 's_001', chance: 0.2 }, { itemId: 'e_001', chance: 0.2 },
+                                ...(levelNum > 1 ? [{ recipeId: 'r_sp_001', chance: 0.03 }] : []),
+                                ...(levelNum > 2 ? [{ itemId: 'w_002', chance: 0.1 }, { itemId: 's_002', chance: 0.1 }, { itemId: 'e_002', chance: 0.1 }, { recipeId: 'r_w_003', chance: 0.05 }] : []),
+                                ...(levelNum > 3 ? [{ itemId: 't_002', chance: 0.08 }, { recipeId: 'r_s_003', chance: 0.05 }] : []),
+                                ...(levelNum > 5 ? [{ itemId: 'w_003', chance: 0.05 }, { itemId: 's_003', chance: 0.05 }, { itemId: 'e_003', chance: 0.05 }, { recipeId: 'r_e_003', chance: 0.05 }] : []),
+                                ...(levelNum > 6 ? [{ itemId: 't_003', chance: 0.05 }, { recipeId: 'r_sp_002', chance: 0.02 }] : []),
+                                ...(levelNum > 8 ? [{ itemId: 'w_004', chance: 0.02 }, { itemId: 's_004', chance: 0.02 }, { itemId: 'e_004', chance: 0.02 }, { recipeId: 'r_w_004', chance: 0.03 }] : []),
+                            ]
+                        }
+                    };
+
+                    if (levelNum === 1) {
+                        level.waveConfig.asteroids = 2;
+                        level.waveConfig.asteroidHp = 5;
+                        level.waveConfig.asteroidSpeed = 0.4;
+                        level.waves = 2;
+                    }
+                    return level;
+                });
+
+                // Add starting items only if inventory is empty (new player)
+                const totalItems = G.player.inventory.length + Object.values(G.player.equipped).filter(item => item !== null).length;
+                if (totalItems === 0) {
+                    G.player.inventory.push({ ...G.items['w_001'], uniqueId: generateItemId(), level: 1 });
+                    G.player.inventory.push({ ...G.items['s_001'], uniqueId: generateItemId(), level: 1 });
+                    G.player.inventory.push({ ...G.items['t_001'], uniqueId: generateItemId(), level: 1 });
+                    
+                    // Add and auto-equip the starting special
+                    const startingSpecial = { ...G.items['sp_000'], uniqueId: generateItemId(), level: 1 };
+                    G.player.equipped.special = startingSpecial;
+                }
+            }
+
+            // --- UI UPDATE FUNCTIONS ---
+            function updateHeader() {
+                DOM.coins.textContent = G.player.coins;
+                DOM.materials.textContent = G.player.materials;
+                DOM.energy.textContent = G.player.energy;
+                DOM.maxEnergy.textContent = G.player.maxEnergy;
+            }
+
+            function getStatWithLevel(item, stat) {
+                if (!item || !item.stats || !item.stats[stat]) return 0;
+                const baseStat = item.stats[stat];
+                const itemLevel = item.level || 1;
+                return baseStat * (1 + (itemLevel - 1) * G.LEVEL_UP_MOD);
+            }
+
+            function updateShipStats() {
+                const baseStats = { hp: 100, damage: 10, fireRate: 2, speed: 2, cooling: 5, heatPerShot: 5 };
+                let finalStats = { ...baseStats };
+
+                for (const type of ['weapon', 'shield', 'engine']) {
+                    const item = G.player.equipped[type];
+                    if (item && item.stats) {
+                        for (const stat of Object.keys(item.stats)) {
+                             if (stat === 'heat') continue;
+                            finalStats[stat] = (finalStats[stat] || 0) + getStatWithLevel(item, stat);
+                        }
+                    }
+                }
+                
+                if (G.player.equipped.weapon) {
+                    finalStats.heatPerShot = getStatWithLevel(G.player.equipped.weapon, 'heat');
+                }
+                
+                DOM.shipHp.textContent = Math.round(finalStats.hp);
+                DOM.shipDmg.textContent = Math.round(finalStats.damage);
+                DOM.shipFirerate.textContent = finalStats.fireRate.toFixed(1);
+                DOM.shipSpeed.textContent = finalStats.speed.toFixed(1);
+                DOM.shipCooling.textContent = finalStats.cooling.toFixed(1);
+
+                return finalStats;
+            }
+            
+            function createItemCard(item, options = {}) {
+                const rarityData = G.RARITY_DATA[item.rarity];
+                const card = document.createElement('div');
+                card.className = `item-card p-2 rounded-lg border-2 w-full h-full flex items-center justify-center cursor-pointer ${rarityData.border}`;
+                card.innerHTML = `<div class="text-2xl">${item.icon}</div>`;
+                card.dataset.itemId = item.uniqueId;
+
+                if (item.level && item.level > 1) {
+                    const levelTag = document.createElement('div');
+                    levelTag.className = 'item-level';
+                    levelTag.textContent = `L${item.level}`;
+                    card.appendChild(levelTag);
+                }
+
+                if (options.onClick) {
+                    card.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        options.onClick(item);
+                    });
+                }
+                return card;
+            }
+
+            function updateEquippedUI() {
+                for (const type of ['weapon', 'shield', 'engine', 'tactic', 'special']) {
+                    const slot = DOM.equipSlots[type];
+                    const item = G.player.equipped[type];
+                    slot.innerHTML = '';
+                    if (item) {
+                        slot.classList.remove('empty');
+                        const card = createItemCard(item, {
+                            onClick: () => openModal(DOM.itemModal, item, { isEquipped: true })
+                        });
+                        slot.appendChild(card);
+                    } else {
+                        slot.classList.add('empty');
+                        slot.innerHTML = `<span class="text-xs text-gray-400">${type.charAt(0).toUpperCase() + type.slice(1)}</span>`;
+                        slot.onclick = () => showToast("Select an item from your inventory to equip it.", "error");
+                    }
+                }
+            }
+
+            function renderLevelMap() {
+                const container = DOM.levelMapContainer;
+                container.innerHTML = '';
+                const svgNS = "http://www.w3.org/2000/svg";
+                const svg = document.createElementNS(svgNS, "svg");
+                svg.setAttribute('width', '100%');
+                svg.setAttribute('height', '100%');
+                svg.setAttribute('viewBox', '0 0 300 600');
+                
+                const path = document.createElementNS(svgNS, 'path');
+                let pathD = "M 150 20";
+                
+                const levelPositions = G.levels.map((level, i) => {
+                    const x = 150 + Math.sin(i * 0.8) * 80;
+                    const y = 40 + i * 55;
+                    if(i > 0) pathD += ` C 150 ${y-25}, ${x} ${y-25}, ${x} ${y}`;
+                    return {x, y};
+                });
+                
+                path.setAttribute('d', pathD);
+                path.setAttribute('fill', 'none');
+                path.setAttribute('class', 'level-path');
+                path.setAttribute('stroke-width', '2');
+                svg.appendChild(path);
+
+                G.levels.forEach((level, i) => {
+                    const {x, y} = levelPositions[i];
+                    const g = document.createElementNS(svgNS, 'g');
+                    g.classList.add('level-node');
+                    
+                    const isUnlocked = level.id <= G.player.unlockedLevel;
+                    g.classList.toggle('unlocked', isUnlocked);
+                    g.classList.toggle('locked', !isUnlocked);
+
+                    const circle = document.createElementNS(svgNS, 'circle');
+                    circle.setAttribute('cx', x);
+                    circle.setAttribute('cy', y);
+                    circle.setAttribute('r', isUnlocked && level.id === G.player.unlockedLevel ? '20' : '15');
+                    circle.setAttribute('fill', '#171430');
+                    circle.setAttribute('stroke', isUnlocked ? (level.id === G.player.unlockedLevel ? '#f59e0b' : '#a855f7') : '#555');
+                    circle.setAttribute('stroke-width', '3');
+                    
+                    const text = document.createElementNS(svgNS, 'text');
+                    text.setAttribute('x', x);
+                    text.setAttribute('y', y + 5);
+                    text.setAttribute('text-anchor', 'middle');
+                    text.setAttribute('fill', '#fff');
+                    text.setAttribute('font-family', 'Orbitron');
+                    text.setAttribute('font-size', '14');
+                    text.textContent = level.id;
+                    
+                    g.appendChild(circle);
+                    g.appendChild(text);
+                    svg.appendChild(g);
+
+                    if(isUnlocked) {
+                        g.addEventListener('click', () => openModal(DOM.levelModal, level));
+                    }
+                });
+                container.appendChild(svg);
+            }
+
+            // --- MODAL LOGIC ---
+            DOM.levelModal.onOpen = (level) => {
+                DOM.levelModal.el.dataset.levelId = level.id;
+                DOM.levelModal.title.textContent = level.name;
+                DOM.levelModal.cost.textContent = level.energyCost;
+                DOM.levelModal.drops.innerHTML = '';
+                level.rewards.lootTable.slice(0, 6).forEach(drop => {
+                    const item = drop.itemId ? G.items[drop.itemId] : G.items[G.recipes[drop.recipeId]?.resultItemId];
+                    if (!item) return;
+                    const isRecipe = !!drop.recipeId;
+                    const dropEl = document.createElement('div');
+                    dropEl.className = `p-1 rounded bg-black bg-opacity-30 ${G.RARITY_DATA[item.rarity].border} border text-xs`;
+                    dropEl.textContent = `${isRecipe ? '📜' : item.icon} ${item.name} ${isRecipe ? '(Recipe)' : ''}`;
+                    DOM.levelModal.drops.appendChild(dropEl);
+                });
+            };
+
+            DOM.inventoryModal.onOpen = () => {
+                const grid = DOM.inventoryModal.grid;
+                grid.innerHTML = '';
+                if (G.player.inventory.length === 0) {
+                    grid.innerHTML = `<p class="col-span-4 text-center text-gray-400">Inventory is empty.</p>`;
+                    return;
+                }
+                G.player.inventory.forEach(item => {
+                    const card = createItemCard(item, {
+                        onClick: () => openModal(DOM.itemModal, item, { isEquipped: false })
+                    });
+                    grid.appendChild(card);
+                });
+            };
+            
+            DOM.itemModal.onOpen = (item, options) => {
+                DOM.itemModal.el.dataset.itemUniqueId = item.uniqueId;
+                const rarityData = G.RARITY_DATA[item.rarity];
+                
+                DOM.itemModal.card.innerHTML = '';
+                DOM.itemModal.card.appendChild(createItemCard(item));
+                DOM.itemModal.card.classList.add(rarityData.border);
+                
+                DOM.itemModal.name.textContent = `${item.name} L${item.level || 1}`;
+                DOM.itemModal.rarity.textContent = rarityData.name;
+                DOM.itemModal.rarity.className = `mb-4 text-lg font-semibold ${rarityData.color}`;
+                
+                DOM.itemModal.stats.innerHTML = '';
+                DOM.itemModal.desc.innerHTML = '';
+                DOM.itemModal.stats.classList.add('hidden');
+                DOM.itemModal.desc.classList.add('hidden');
+
+                if (item.type === 'tactic' || item.type === 'special') {
+                    DOM.itemModal.desc.textContent = item.description;
+                    DOM.itemModal.desc.classList.remove('hidden');
+                } else {
+                    DOM.itemModal.stats.classList.remove('hidden');
+                    if (item.stats) {
+                        for (const [stat, value] of Object.entries(item.stats)) {
+                            const boostedValue = getStatWithLevel(item, stat);
+                            const sign = value >= 0 ? '+' : '';
+                            DOM.itemModal.stats.innerHTML += `<p>${stat.charAt(0).toUpperCase() + stat.slice(1)}: <span class="font-semibold">${sign}${boostedValue.toFixed(1)}</span></p>`;
+                        }
+                    }
+                }
+                
+                DOM.itemModal.equipBtn.classList.toggle('hidden', options.isEquipped);
+                DOM.itemModal.unequipBtn.classList.toggle('hidden', !options.isEquipped);
+                const canUpgrade = item.type !== 'tactic' && item.type !== 'special';
+                DOM.itemModal.upgradeBtn.classList.toggle('hidden', !canUpgrade);
+            };
+
+            DOM.lootModal.onOpen = (result) => {
+                let revealedCount = 0;
+                const totalLoot = result.items.length;
+
+                DOM.lootModal.title.textContent = result.success ? "VICTORY" : "DEFEAT";
+                DOM.lootModal.summary.innerHTML = `
+                    <p>Coins Found: <span class="font-semibold text-yellow-400">+${result.coins}</span></p>
+                    <p>Materials Found: <span class="font-semibold text-green-400">+${result.materials}</span></p>
+                `;
+                DOM.lootModal.grid.innerHTML = '';
+                DOM.lootModal.closeBtn.classList.add('opacity-0', 'pointer-events-none');
+                
+                if (totalLoot === 0) {
+                    DOM.lootModal.closeBtn.classList.remove('opacity-0', 'pointer-events-none');
+                    return;
+                }
+
+                result.items.forEach((item, index) => {
+                    const crateWrapper = document.createElement('div');
+                    crateWrapper.className = 'aspect-square flex items-center justify-center';
+                    
+                    const crate = document.createElement('div');
+                    crate.className = 'loot-crate text-4xl cursor-pointer';
+                    crate.textContent = item.isBonus ? '🌟' : '📦';
+                    
+                    crate.addEventListener('click', () => {
+                        crate.classList.add('opened');
+                        
+                        const card = createItemCard(item, {
+                            onClick: () => {
+                               // No longer closes the loot modal, just opens the item modal on top.
+                               openModal(DOM.itemModal, item, { isEquipped: false });
+                            }
+                        });
+                        
+                        setTimeout(() => {
+                           crateWrapper.innerHTML = '';
+                           crateWrapper.appendChild(card);
+                        }, 150);
+
+                        revealedCount++;
+                        if (revealedCount === totalLoot) {
+                            DOM.lootModal.closeBtn.classList.remove('opacity-0', 'pointer-events-none');
+                        }
+                    }, { once: true });
+                    
+                    crateWrapper.appendChild(crate);
+                    DOM.lootModal.grid.appendChild(crateWrapper);
+                });
+            };
+            
+            DOM.confirmModal.onOpen = (title, text, onConfirm) => {
+                DOM.confirmModal.title.textContent = title;
+                DOM.confirmModal.text.textContent = text;
+                
+                const confirmHandler = () => {
+                    onConfirm();
+                    closeModal(DOM.confirmModal);
+                };
+                
+                DOM.confirmModal.confirmBtn.addEventListener('click', confirmHandler, { once: true });
+            };
+
+
+            DOM.craftingModal.onOpen = () => {
+                renderRecipeList();
+                DOM.craftingModal.details.innerHTML = `<p class="text-gray-400">Select a recipe to view details.</p>`;
+            };
+            
+            DOM.upgradeModal.onOpen = (item) => {
+                renderUpgradeUI(item);
+            };
+            
+            function renderUpgradeUI(item) {
+                const content = DOM.upgradeModal.content;
+                const rarityData = G.RARITY_DATA[item.rarity];
+                const currentLevel = item.level || 1;
+                const maxLevel = rarityData.maxLevel;
+                const isMaxLevel = currentLevel >= maxLevel;
+                
+                const cost = {
+                    coins: 100 * currentLevel * (Object.values(G.RARITY_DATA).indexOf(rarityData) + 1),
+                    materials: 10 * currentLevel * (Object.values(G.RARITY_DATA).indexOf(rarityData) + 1),
+                };
+                
+                const hasCoins = G.player.coins >= cost.coins;
+                const hasMaterials = G.player.materials >= cost.materials;
+                const canUpgrade = !isMaxLevel && hasCoins && hasMaterials;
+                
+                let statsHtml = '';
+                if(item.stats) {
+                    for(const stat in item.stats) {
+                        const baseValue = item.stats[stat];
+                        const currentValue = getStatWithLevel(item, stat);
+                        const nextValue = getStatWithLevel({ ...item, level: currentLevel + 1 }, stat);
+                        statsHtml += `
+                            <div class="flex justify-between items-center text-sm">
+                                <span>${stat.charAt(0).toUpperCase() + stat.slice(1)}</span>
+                                <div class="flex items-center gap-2">
+                                    <span>${currentValue.toFixed(1)}</span>
+                                    ${!isMaxLevel ? `<span class="text-green-400">→ ${nextValue.toFixed(1)}</span>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+                
+                content.innerHTML = `
+                    <h2 class="font-orbitron text-2xl mb-4">UPGRADE STATION</h2>
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="item-card p-2 rounded-lg border-2 w-20 h-20 flex-shrink-0 flex items-center justify-center ${rarityData.border}">
+                             <div class="text-3xl">${item.icon}</div>
+                             <div class="item-level">L${currentLevel}</div>
+                        </div>
+                        <div class="text-left">
+                            <h3 class="font-orbitron text-lg">${item.name}</h3>
+                            <p class="${rarityData.color}">${isMaxLevel ? `Level MAX (${maxLevel})` : `Level ${currentLevel} → ${currentLevel+1}`}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-black/20 p-4 rounded-lg space-y-2 mb-6">
+                        ${statsHtml}
+                    </div>
+                    
+                     <h4 class="font-orbitron mb-2">UPGRADE COST</h4>
+                     <div class="w-full text-left bg-black/20 p-4 rounded-lg space-y-2 mb-6">
+                        <p class="flex justify-between ${hasCoins || isMaxLevel ? 'text-green-400' : 'text-red-400'}">
+                            <span>Coins</span>
+                            <span>${isMaxLevel ? '---' : `${G.player.coins} / ${cost.coins}`}</span>
+                        </p>
+                         <p class="flex justify-between ${hasMaterials || isMaxLevel ? 'text-green-400' : 'text-red-400'}">
+                            <span>Materials</span>
+                            <span>${isMaxLevel ? '---' : `${G.player.materials} / ${cost.materials}`}</span>
+                        </p>
+                    </div>
+
+                    <div class="flex gap-4">
+                         <button id="close-upgrade-modal" class="btn-secondary w-full py-2 rounded-lg font-orbitron">CANCEL</button>
+                         <button id="confirm-upgrade-button" class="btn-primary w-full py-2 rounded-lg font-orbitron" ${!canUpgrade ? 'disabled' : ''}>
+                            ${isMaxLevel ? 'MAX LEVEL' : 'UPGRADE'}
+                         </button>
+                    </div>
+                `;
+                
+                $('#close-upgrade-modal').addEventListener('click', () => closeModal(DOM.upgradeModal));
+                
+                if(canUpgrade) {
+                    $('#confirm-upgrade-button').addEventListener('click', () => {
+                        G.player.coins -= cost.coins;
+                        G.player.materials -= cost.materials;
+                        item.level = currentLevel + 1;
+                        showToast(`${item.name} upgraded to Level ${item.level}!`, 'success');
+                        updateAllUI();
+                        renderUpgradeUI(item); // Re-render to show next level stats/cost
+                    });
+                } else if (!isMaxLevel) {
+                     $('#confirm-upgrade-button').classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            }
+
+
+            // --- CRAFTING UI & LOGIC ---
+            function renderRecipeList() {
+                const list = DOM.craftingModal.list;
+                list.innerHTML = '';
+                if (G.player.unlockedRecipes.length === 0) {
+                    list.innerHTML = `<p class="text-gray-400 text-sm">No recipes unlocked. Find them by playing levels.</p>`;
+                    return;
+                }
+                G.player.unlockedRecipes.forEach(recipeId => {
+                    const recipe = G.recipes[recipeId];
+                    if (!recipe) return;
+                    const item = G.items[recipe.resultItemId];
+                    const rarityData = G.RARITY_DATA[item.rarity];
+                    
+                    const recipeEl = document.createElement('div');
+                    recipeEl.className = `p-2 rounded-lg flex items-center gap-3 cursor-pointer border border-transparent hover:bg-purple-500/10 hover:border-purple-500/50`;
+                    recipeEl.innerHTML = `
+                        <div class="item-card p-1 rounded border-2 ${rarityData.border} w-10 h-10 flex-shrink-0 flex items-center justify-center">
+                            <div class="text-lg">${item.icon}</div>
+                        </div>
+                        <span class="text-sm font-semibold">${item.name}</span>
+                    `;
+                    recipeEl.addEventListener('click', () => {
+                        $$('#recipe-list > div').forEach(el => el.classList.remove('bg-purple-500/20', 'border-purple-500/80'));
+                        recipeEl.classList.add('bg-purple-500/20', 'border-purple-500/80');
+                        renderRecipeDetails(recipe);
+                    });
+                    list.appendChild(recipeEl);
+                });
+            }
+
+            function renderRecipeDetails(recipe) {
+                const details = DOM.craftingModal.details;
+                const resultItem = G.items[recipe.resultItemId];
+                const rarityData = G.RARITY_DATA[resultItem.rarity];
+
+                const componentItem = G.player.inventory.find(item => 
+                    item.type === recipe.component.type && item.rarity === recipe.component.rarity
+                );
+
+                const hasCoins = G.player.coins >= recipe.cost.coins;
+                const hasMaterials = G.player.materials >= recipe.cost.materials;
+                const canCraft = componentItem && hasCoins && hasMaterials;
+                
+                const componentRarityName = G.RARITY_DATA[recipe.component.rarity].name;
+
+                details.innerHTML = `
+                    <h3 class="font-orbitron text-xl mb-4">CRAFT: ${resultItem.name}</h3>
+                    <div class="item-card p-2 rounded-lg border-2 ${rarityData.border} w-24 h-24 mx-auto mb-4 flex items-center justify-center">
+                        <div class="text-4xl">${resultItem.icon}</div>
+                    </div>
+                    
+                    <h4 class="font-orbitron mt-6 mb-2">REQUIREMENTS</h4>
+                    <div class="w-full text-left bg-black/20 p-4 rounded-lg space-y-2">
+                        <p class="flex justify-between ${hasCoins ? 'text-green-400' : 'text-red-400'}">
+                            <span>Coins</span>
+                            <span>${G.player.coins} / ${recipe.cost.coins}</span>
+                        </p>
+                         <p class="flex justify-between ${hasMaterials ? 'text-green-400' : 'text-red-400'}">
+                            <span>Materials</span>
+                            <span>${G.player.materials} / ${recipe.cost.materials}</span>
+                        </p>
+                        <p class="flex justify-between ${componentItem ? 'text-green-400' : 'text-red-400'}">
+                            <span>1x ${componentRarityName} ${recipe.component.type.charAt(0).toUpperCase() + recipe.component.type.slice(1)}</span>
+                            <span>${componentItem ? '✓ HAVE' : '✕ MISSING'}</span>
+                        </p>
+                    </div>
+
+                    <button id="craft-button" class="btn-primary w-full py-3 mt-6 rounded-lg font-orbitron text-lg" ${!canCraft ? 'disabled' : ''}>
+                        CRAFT
+                    </button>
+                `;
+                if (!canCraft) {
+                    $('#craft-button').classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    $('#craft-button').addEventListener('click', () => craftItem(recipe.id));
+                }
+            }
+
+            function craftItem(recipeId) {
+                const recipe = G.recipes[recipeId];
+                if (!recipe) return;
+
+                const componentItem = G.player.inventory.find(item => 
+                    item.type === recipe.component.type && item.rarity === recipe.component.rarity
+                );
+                const hasCoins = G.player.coins >= recipe.cost.coins;
+                const hasMaterials = G.player.materials >= recipe.cost.materials;
+
+                if (componentItem && hasCoins && hasMaterials) {
+                    G.player.coins -= recipe.cost.coins;
+                    G.player.materials -= recipe.cost.materials;
+                    G.player.inventory = G.player.inventory.filter(item => item.uniqueId !== componentItem.uniqueId);
+
+                    const newItem = { ...G.items[recipe.resultItemId], uniqueId: generateItemId(), level: 1 };
+                    G.player.inventory.push(newItem);
+
+                    showToast(`Crafted ${newItem.name}!`, 'success');
+                    
+                    updateAllUI();
+                    renderRecipeDetails(recipe);
+                } else {
+                    showToast('Missing required components or resources!', 'error');
+                }
+            }
+            
+            function switchTab(tabName) {
+                if (tabName === 'map') {
+                    DOM.tabs.mapPanel.classList.remove('hidden');
+                    DOM.tabs.hangarPanel.classList.add('hidden');
+                    DOM.tabs.mapBtn.classList.add('active');
+                    DOM.tabs.hangarBtn.classList.remove('active');
+                } else {
+                    DOM.tabs.mapPanel.classList.add('hidden');
+                    DOM.tabs.hangarPanel.classList.remove('hidden');
+                    DOM.tabs.mapBtn.classList.remove('active');
+                    DOM.tabs.hangarBtn.classList.add('active');
+                }
+            }
+
+            // --- EVENT LISTENERS ---
+            function setupEventListeners() {
+                // Splash Screen
+                DOM.splashScreen.addEventListener('click', () => {
+                    DOM.splashScreen.style.opacity = 0;
+                    DOM.splashScreen.style.pointerEvents = 'none';
+                    DOM.appContainer.style.opacity = 1;
+                    
+                    // Start game logic only after splash is dismissed
+                    loadGame();
+                    initializeData();
+                    setupDelayedEventListeners();
+                    updateAllUI();
+                    updateEnergy();
+                    setInterval(updateEnergy, ENERGY_TICKER_INTERVAL);
+                    resizeCanvas();
+                }, { once: true });
+            }
+            
+            // Listeners that depend on game data being loaded
+            function setupDelayedEventListeners() {
+                // Modal Close Buttons
+                DOM.levelModal.closeBtn.addEventListener('click', () => closeModal(DOM.levelModal));
+                DOM.inventoryModal.closeBtn.addEventListener('click', () => closeModal(DOM.inventoryModal));
+                DOM.itemModal.closeBtn.addEventListener('click', () => closeModal(DOM.itemModal));
+                DOM.craftingModal.closeBtn.addEventListener('click', () => closeModal(DOM.craftingModal));
+                DOM.confirmModal.cancelBtn.addEventListener('click', () => closeModal(DOM.confirmModal));
+                DOM.lootModal.closeBtn.addEventListener('click', () => {
+                    closeModal(DOM.lootModal);
+                    switchScreen('main');
+                });
+                
+                // Tabs
+                DOM.tabs.mapBtn.addEventListener('click', () => switchTab('map'));
+                DOM.tabs.hangarBtn.addEventListener('click', () => switchTab('hangar'));
+
+                // Main Screen Buttons
+                DOM.inventoryButton.addEventListener('click', () => openModal(DOM.inventoryModal));
+                DOM.craftingButton.addEventListener('click', () => openModal(DOM.craftingModal));
+                DOM.resetProgressButton.addEventListener('click', () => {
+                    openModal(DOM.confirmModal, 'RESET PROGRESS', 'All your items, currency, and level progress will be permanently deleted. Are you sure?', () => {
+                        localStorage.removeItem('stardustScrappersSave');
+                        window.location.reload();
+                    });
+                });
+                
+                // Level Start
+                DOM.levelModal.startBtn.addEventListener('click', () => {
+                    const levelId = parseInt(DOM.levelModal.el.dataset.levelId);
+                    const level = G.levels.find(l => l.id === levelId);
+                    if (G.player.energy >= level.energyCost) {
+                        if (G.player.energy === G.player.maxEnergy) {
+                            G.player.lastEnergyTimestamp = Date.now();
+                        }
+                        G.player.energy -= level.energyCost;
+                        updateEnergy();
+                        saveGame();
+                        closeModal(DOM.levelModal);
+                        switchScreen('game');
+                        startGame(level);
+                    } else {
+                        showToast("Not enough energy!", "error");
+                    }
+                });
+                
+                // Item Modal Buttons
+                DOM.itemModal.upgradeBtn.addEventListener('click', () => {
+                    const item = findItemInInventory(DOM.itemModal.el.dataset.itemUniqueId) || findEquippedItem(DOM.itemModal.el.dataset.itemUniqueId);
+                    if (item) {
+                        openModal(DOM.upgradeModal, item);
+                    }
+                });
+
+                DOM.itemModal.equipBtn.addEventListener('click', () => {
+                    const item = findItemInInventory(DOM.itemModal.el.dataset.itemUniqueId);
+                    if (item) {
+                        const oldItem = G.player.equipped[item.type];
+                        if (oldItem) {
+                            G.player.inventory.push(oldItem);
+                        }
+                        G.player.equipped[item.type] = item;
+                        G.player.inventory = G.player.inventory.filter(i => i.uniqueId !== item.uniqueId);
+
+                        showToast(`${item.name} equipped!`, 'success');
+                        closeAllModals();
+                        updateAllUI();
+                        openModal(DOM.inventoryModal);
+                    }
+                });
+
+                DOM.itemModal.unequipBtn.addEventListener('click', () => {
+                    const item = findEquippedItem(DOM.itemModal.el.dataset.itemUniqueId);
+                     if (item) {
+                        G.player.inventory.push(item);
+                        G.player.equipped[item.type] = null;
+                        
+                        showToast(`${item.name} unequipped!`, 'success');
+                        closeAllModals();
+                        updateAllUI();
+                    }
+                });
+                
+                // Player interaction in-game
+                DOM.gameScreen.addEventListener('click', () => {
+                    const ship = G.game.ship;
+                    if (G.game.isActive && ship && ship.specialCharge >= ship.maxSpecialCharge) {
+                        ship.useSpecial(G.game.asteroids, G.game.bullets);
+                        showToast(`${ship.special.name} activated!`, 'success');
+                    }
+                });
+
+                DOM.cooldownButton.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent special from firing
+                    if (G.game.isActive && G.game.cooldownCharges > 0) {
+                        G.game.cooldownCharges--;
+                        G.game.ship.heat = 0;
+                        G.game.ship.isOverheated = false;
+                        showToast('Weapon Cooled!', 'success');
+                        createExplosion(G.game.ship.x, G.game.ship.y, 20, '#00ffff');
+                    }
+                });
+            }
+
+            // --- GAME LOGIC ---
+            function findItemInInventory(uniqueId) {
+                return G.player.inventory.find(i => i.uniqueId === uniqueId);
+            }
+             function findEquippedItem(uniqueId) {
+                for(const type in G.player.equipped) {
+                    const item = G.player.equipped[type];
+                    if(item && item.uniqueId === uniqueId) return item;
+                }
+                return null;
+            }
+
+            function switchScreen(screen) {
+                DOM.mainScreen.classList.toggle('hidden', screen !== 'main');
+                DOM.gameScreen.classList.toggle('hidden', screen !== 'game');
+                if (screen === 'main') {
+                    switchTab('map'); // Default to map tab
+                }
+                if (screen === 'game') {
+                    resizeCanvas();
+                }
+            }
+
+            function startGame(level) {
+                G.game.isActive = true;
+                G.game.currentLevel = level;
+                G.game.currentWave = 0;
+                G.game.asteroids = [];
+                G.game.bullets = [];
+                G.game.particles = [];
+                G.game.ship = null;
+                G.game.pendingLoot = { coins: 0, materials: 0, items: [] };
+                G.game.cooldownCharges = 2;
+
+                DOM.gameLevel.textContent = level.id;
+                DOM.gameTotalWaves.textContent = level.waves;
+
+                const finalStats = updateShipStats();
+                const tactic = G.player.equipped.tactic || G.items['t_001'];
+                const special = G.player.equipped.special;
+                G.game.ship = new PlayerShip(finalStats, tactic, special);
+
+                nextWave();
+
+                if (G.game.loopId) cancelAnimationFrame(G.game.loopId);
+                G.game.loopId = requestAnimationFrame(gameLoop);
+            }
+            
+            function handleWaveClear() {
+                const level = G.game.currentLevel;
+                const waveNum = G.game.currentWave;
+                
+                // Add currency
+                G.game.pendingLoot.coins += Math.floor(Math.random() * (level.rewards.coinsPerWave[1] - level.rewards.coinsPerWave[0])) + level.rewards.coinsPerWave[0];
+                G.game.pendingLoot.materials += Math.floor(Math.random() * (level.rewards.materialsPerWave[1] - level.rewards.materialsPerWave[0])) + level.rewards.materialsPerWave[0];
+
+                // Roll for item/recipe
+                const itemLoot = generateLoot(level, waveNum);
+                if (itemLoot) {
+                    G.game.pendingLoot.items.push(itemLoot);
+                }
+            }
+
+            function generateLoot(level, waveNum, isBonus = false) {
+                const lootTable = level.rewards.lootTable;
+                for (const drop of lootTable) {
+                    const chanceModifier = 1 + (waveNum * WAVE_LOOT_MODIFIER) + (isBonus ? 0.25 : 0);
+                    const finalChance = drop.chance * chanceModifier;
+
+                    if (Math.random() < finalChance) {
+                        if (drop.itemId) {
+                            return { ...G.items[drop.itemId], uniqueId: generateItemId(), level: 1, isBonus };
+                        }
+                        if (drop.recipeId) {
+                            if (!G.player.unlockedRecipes.includes(drop.recipeId)) {
+                                G.player.unlockedRecipes.push(drop.recipeId);
+                                const recipe = G.recipes[drop.recipeId];
+                                showToast(`New Recipe Unlocked: ${G.items[recipe.resultItemId].name}!`, 'success');
+                            }
+                            return null; // Don't show recipes as physical items
+                        }
+                    }
+                }
+                return null;
+            }
+
+            function nextWave() {
+                if (!G.game.isActive) return;
+                
+                // Handle loot for the wave that was just cleared
+                if (G.game.currentWave > 0) {
+                    handleWaveClear();
+                }
+
+                if (G.game.currentWave >= G.game.currentLevel.waves) {
+                    endGame(true); // Victory
+                    return;
+                }
+                
+                G.game.currentWave++;
+                DOM.gameWave.textContent = G.game.currentWave;
+                spawnAsteroids();
+            }
+
+            function spawnAsteroids() {
+                const config = G.game.currentLevel.waveConfig;
+                for (let i = 0; i < config.asteroids; i++) {
+                    const asteroid = new Asteroid(config.asteroidHp, config.asteroidSpeed, 'large');
+                    G.game.asteroids.push(asteroid);
+                }
+            }
+            
+            function endGame(isVictory) {
+                if (!G.game.isActive) return;
+                cancelAnimationFrame(G.game.loopId);
+                G.game.isActive = false;
+
+                const result = G.game.pendingLoot;
+                result.success = isVictory;
+
+                if (isVictory) {
+                    // Add bonus loot for clearing the level
+                    const bonusLoot = generateLoot(G.game.currentLevel, G.game.currentWave, true);
+                    if (bonusLoot) {
+                        result.items.push(bonusLoot);
+                    }
+
+                    if (G.game.currentLevel.id === G.player.unlockedLevel && G.player.unlockedLevel < G.levels.length) {
+                        G.player.unlockedLevel++;
+                        showToast(`Sector ${G.player.unlockedLevel} unlocked!`, 'success');
+                    }
+                } else {
+                    // Give smaller consolation prize on defeat
+                    result.coins = Math.floor(result.coins * 0.5);
+                    result.materials = Math.floor(result.materials * 0.5);
+                }
+
+                G.player.coins += result.coins;
+                G.player.materials += result.materials;
+                G.player.inventory.push(...result.items);
+                
+                updateAllUI();
+                openModal(DOM.lootModal, result);
+            }
+
+            function updateAllUI() {
+                updateHeader();
+                updateShipStats();
+                updateEquippedUI();
+                renderLevelMap();
+                saveGame(); // Save state on every major UI update
+            }
+
+            function updateEnergy() {
+                const { energy, maxEnergy } = G.player;
+                if (energy >= maxEnergy) {
+                    DOM.energyTimer.textContent = 'Full';
+                    G.player.lastEnergyTimestamp = null; // Reset timestamp when full
+                    return;
+                }
+
+                const now = Date.now();
+                if (G.player.lastEnergyTimestamp === null) {
+                    G.player.lastEnergyTimestamp = now;
+                }
+
+                const secondsElapsed = (now - G.player.lastEnergyTimestamp) / 1000;
+                const energyToRegen = Math.floor(secondsElapsed / ENERGY_REGEN_RATE_SECONDS);
+
+                if (energyToRegen > 0) {
+                    const oldEnergy = G.player.energy;
+                    G.player.energy = Math.min(maxEnergy, energy + energyToRegen);
+                    const energyActuallyGained = G.player.energy - oldEnergy;
+                    
+                    G.player.lastEnergyTimestamp += energyActuallyGained * ENERGY_REGEN_RATE_SECONDS * 1000;
+                    
+                    updateHeader();
+                    saveGame();
+                }
+                
+                if (G.player.energy < G.player.maxEnergy) {
+                    const newSecondsElapsed = (now - G.player.lastEnergyTimestamp) / 1000;
+                    const secondsToNext = Math.ceil(ENERGY_REGEN_RATE_SECONDS - (newSecondsElapsed % ENERGY_REGEN_RATE_SECONDS));
+                    const minutes = Math.floor(secondsToNext / 60);
+                    const seconds = Math.floor(secondsToNext % 60);
+                    DOM.energyTimer.textContent = `Next in ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                } else {
+                     DOM.energyTimer.textContent = 'Full';
+                }
+            }
+
+
+            // --- GAME LOOP & ENTITIES ---
+            const canvas = DOM.canvas;
+            const ctx = canvas.getContext('2d');
+            G.game.ctx = ctx;
+
+            function resizeCanvas() {
+                canvas.width = canvas.clientWidth;
+                canvas.height = canvas.clientHeight;
+            }
+            window.addEventListener('resize', resizeCanvas);
+            
+            class PlayerShip {
+                constructor(stats, tactic, special) {
+                    this.x = canvas.width / 2;
+                    this.y = canvas.height / 2;
+                    this.r = 15;
+                    this.angle = -Math.PI / 2;
+                    this.stats = stats;
+                    this.tactic = tactic;
+                    this.special = special;
+                    this.hp = stats.hp;
+                    this.maxHp = stats.hp;
+                    this.heat = 0;
+                    this.maxHeat = 100;
+                    this.isOverheated = false;
+                    this.specialCharge = 0;
+                    this.maxSpecialCharge = special ? special.chargeTime * 60 : Infinity;
+                    this.vel = { x: 0, y: 0 };
+                    this.rotationSpeed = 0.08;
+                    this.thrust = 0.05;
+                    this.friction = 0.99;
+                    this.fireCooldown = 0;
+                    this.aimOffset = 0;
+                    this.aimWobbleTime = 0;
+                }
+
+                draw() {
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.angle + Math.PI / 2);
+                    ctx.strokeStyle = '#fff';
+                    ctx.fillStyle = '#333';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(0, -this.r); // Nose
+                    ctx.lineTo(this.r * 0.8, this.r * 0.8);
+                    ctx.lineTo(-this.r * 0.8, this.r * 0.8);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                update(asteroids, bullets) {
+                    // Overheat logic
+                    if (this.isOverheated) {
+                        this.heat -= this.stats.cooling * 0.5 * (1/60); 
+                        if (this.heat <= 0) {
+                            this.heat = 0;
+                            this.isOverheated = false;
+                        }
+                    } else {
+                        this.heat = Math.max(0, this.heat - this.stats.cooling * (1/60));
+                    }
+                    
+                    // Special charge logic
+                    if (this.special && this.specialCharge < this.maxSpecialCharge) {
+                        this.specialCharge++;
+                    }
+                    
+                    // AI targeting and movement
+                    const target = this.findNearestAsteroid(asteroids);
+                    if (target) {
+                        this.aimWobbleTime--;
+                        if (this.aimWobbleTime <= 0) {
+                            this.aimOffset = (Math.random() - 0.5) * 0.3; 
+                            this.aimWobbleTime = 30 + Math.random() * 30;
+                        }
+
+                        const dist = this.distanceTo(target);
+                        let angleToTarget = Math.atan2(target.y - this.y, target.x - this.x);
+                        let desiredAngle = angleToTarget + this.aimOffset;
+                        
+                        const behavior = this.tactic.behavior || 'standard';
+                        if (behavior === 'evasive' && dist < 250) {
+                            desiredAngle = angleToTarget + Math.PI;
+                        }
+
+                        let angleDiff = desiredAngle - this.angle;
+                        while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                        while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+
+                        if (Math.abs(angleDiff) > this.rotationSpeed) {
+                            this.angle += Math.sign(angleDiff) * this.rotationSpeed;
+                        } else {
+                            this.angle = desiredAngle;
+                        }
+
+                        const isAimedAtTarget = Math.abs(angleToTarget - this.angle) < 0.3;
+                        const heatThreshold = this.isOverheated ? 1 : 0.9;
+                        const canFire = this.fireCooldown <= 0 && this.heat < this.maxHeat * heatThreshold;
+
+                        switch (behavior) {
+                            case 'aggressive':
+                                if (dist > 100) this.thrustForward();
+                                if (isAimedAtTarget && canFire) this.shoot(bullets);
+                                break;
+                            case 'evasive':
+                                this.thrustForward();
+                                if (isAimedAtTarget && canFire) this.shoot(bullets);
+                                break;
+                            case 'standard':
+                            default:
+                                if (dist > 200) this.thrustForward();
+                                if (isAimedAtTarget && canFire) this.shoot(bullets);
+                                break;
+                        }
+                    }
+                    
+                    if (this.fireCooldown > 0) this.fireCooldown--;
+
+                    this.vel.x *= this.friction;
+                    this.vel.y *= this.friction;
+                    
+                    const speed = Math.hypot(this.vel.x, this.vel.y);
+                    if (speed > this.stats.speed) {
+                        this.vel.x = (this.vel.x / speed) * this.stats.speed;
+                        this.vel.y = (this.vel.y / speed) * this.stats.speed;
+                    }
+
+                    this.x += this.vel.x;
+                    this.y += this.vel.y;
+                    this.wrapScreen();
+                }
+                
+                thrustForward() {
+                    this.vel.x += Math.cos(this.angle) * this.thrust;
+                    this.vel.y += Math.sin(this.angle) * this.thrust;
+                }
+
+                shoot(bullets) {
+                    if (this.isOverheated) return;
+                    bullets.push(new Bullet(this.x, this.y, this.angle, this.stats.damage));
+                    this.fireCooldown = 100 / this.stats.fireRate;
+                    this.heat += this.stats.heatPerShot;
+                    if (this.heat >= this.maxHeat) {
+                        this.heat = this.maxHeat;
+                        this.isOverheated = true;
+                    }
+                }
+                
+                useSpecial(asteroids, bullets) {
+                    if (!this.special) return;
+                    switch (this.special.effect) {
+                        case 'repel':
+                            createExplosion(this.x, this.y, 20, '#fff');
+                            asteroids.forEach(a => {
+                                const dist = this.distanceTo(a);
+                                if (dist < 150) { // Repel range
+                                    const angleToAsteroid = Math.atan2(a.y - this.y, a.x - this.x);
+                                    let angleDiff = angleToAsteroid - this.angle;
+                                    while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                                    while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+
+                                    if (Math.abs(angleDiff) < Math.PI / 4) { // 90 degree cone
+                                        const repelForce = 5 / (dist / 50 + 1);
+                                        a.vel.x += Math.cos(angleToAsteroid) * repelForce;
+                                        a.vel.y += Math.sin(angleToAsteroid) * repelForce;
+                                    }
+                                }
+                            });
+                            break;
+                        case 'emp_burst':
+                            asteroids.forEach(a => a.hp -= this.stats.damage * 2);
+                            createExplosion(this.x, this.y, 50, '#0af');
+                            break;
+                        case 'shield_overcharge':
+                            this.hp = Math.min(this.maxHp, this.hp + this.maxHp * 0.5);
+                            createExplosion(this.x, this.y, 30, '#0f0');
+                            break;
+                        case 'bullet_salvo':
+                            for(let i = 0; i < 10; i++) {
+                                const angle = this.angle + (i - 4.5) * 0.15;
+                                bullets.push(new Bullet(this.x, this.y, angle, this.stats.damage * 0.8));
+                            }
+                            break;
+                    }
+                    this.specialCharge = 0;
+                }
+                
+                distanceTo(obj) {
+                    return Math.hypot(this.x - obj.x, this.y - obj.y);
+                }
+
+                findNearestAsteroid(asteroids, maxRange = Infinity) {
+                    let closest = null;
+                    let closestDist = Infinity;
+                    for (const ast of asteroids) {
+                        const dist = this.distanceTo(ast);
+                        if (dist < closestDist && dist <= maxRange) {
+                            closest = ast;
+                            closestDist = dist;
+                        }
+                    }
+                    return closest;
+                }
+
+                wrapScreen() {
+                    if (this.x < 0) this.x = canvas.width;
+                    if (this.x > canvas.width) this.x = 0;
+                    if (this.y < 0) this.y = canvas.height;
+                    if (this.y > canvas.height) this.y = 0;
+                }
+                
+                takeDamage(amount) {
+                    if (this.special) {
+                        // Gain charge when taking damage. Taking damage equal to 100% of max HP will fill 50% of the special meter.
+                        const chargeGain = (amount / this.maxHp) * this.maxSpecialCharge * 0.5;
+                        this.specialCharge = Math.min(this.maxSpecialCharge, this.specialCharge + chargeGain);
+                    }
+                    this.hp -= amount;
+                    if (this.hp <= 0) {
+                        this.hp = 0;
+                        endGame(false);
+                    }
+                }
+            }
+
+            class Asteroid {
+                constructor(hp, speed, size, x, y, vel) {
+                    this.size = size;
+                    switch(size) {
+                        case 'large': this.r = 30 + Math.random() * 10; this.baseHp = 20; this.damage = 20; break;
+                        case 'medium': this.r = 15 + Math.random() * 5; this.baseHp = 10; this.damage = 10; break;
+                        case 'small': this.r = 8 + Math.random() * 3; this.baseHp = 3; this.damage = 5; break;
+                    }
+
+                    if (x !== undefined && y !== undefined) {
+                         this.x = x; this.y = y;
+                    } else {
+                        const edge = Math.floor(Math.random() * 4);
+                        switch(edge) {
+                            case 0: this.x = -this.r; this.y = Math.random() * canvas.height; break;
+                            case 1: this.x = canvas.width + this.r; this.y = Math.random() * canvas.height; break;
+                            case 2: this.x = Math.random() * canvas.width; this.y = -this.r; break;
+                            case 3: this.x = Math.random() * canvas.width; this.y = canvas.height + this.r; break;
+                        }
+                    }
+
+                    this.hp = hp + this.baseHp;
+                    // Make small asteroids have a fixed, low HP
+                    if (this.size === 'small') {
+                        this.hp = this.baseHp;
+                    }
+
+                    const moveSpeed = (speed + Math.random() * 0.5);
+
+                    if (vel) {
+                        this.vel = vel;
+                    } else {
+                         const randomAngle = Math.random() * Math.PI * 2;
+                         this.vel = { x: Math.cos(randomAngle) * moveSpeed, y: Math.sin(randomAngle) * moveSpeed };
+                    }
+                   
+                    this.rotation = (Math.random() - 0.5) * 0.02;
+                    this.angle = 0;
+                    
+                    this.shape = [];
+                    const verts = 7 + Math.floor(Math.random() * 5);
+                    for (let i = 0; i < verts; i++) {
+                        this.shape.push({
+                            x: Math.cos(i/verts * Math.PI*2) * (this.r + (Math.random()-0.5)*this.r*0.4),
+                            y: Math.sin(i/verts * Math.PI*2) * (this.r + (Math.random()-0.5)*this.r*0.4)
+                        });
+                    }
+                }
+                draw() {
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.angle);
+                    ctx.strokeStyle = '#aaa';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(this.shape[0].x, this.shape[0].y);
+                    for (let i = 1; i < this.shape.length; i++) {
+                        ctx.lineTo(this.shape[i].x, this.shape[i].y);
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                    ctx.restore();
+                }
+                update() {
+                    this.x += this.vel.x;
+                    this.y += this.vel.y;
+                    this.angle += this.rotation;
+                    this.wrapScreen();
+                }
+                 wrapScreen() {
+                    if (this.x < -this.r*2) this.x = canvas.width + this.r*2;
+                    if (this.x > canvas.width + this.r*2) this.x = -this.r*2;
+                    if (this.y < -this.r*2) this.y = canvas.height + this.r*2;
+                    if (this.y > canvas.height + this.r*2) this.y = -this.r*2;
+                }
+            }
+
+            class Bullet {
+                constructor(x, y, angle, damage) {
+                    this.x = x + Math.cos(angle) * 15;
+                    this.y = y + Math.sin(angle) * 15;
+                    this.r = 3;
+                    this.vel = { x: Math.cos(angle) * 8, y: Math.sin(angle) * 8 };
+                    this.lifespan = 80;
+                    this.damage = damage;
+                }
+                draw() {
+                    ctx.fillStyle = '#0f0';
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                update() {
+                    this.x += this.vel.x;
+                    this.y += this.vel.y;
+                    this.lifespan--;
+                }
+            }
+            
+            class Particle {
+                constructor(x, y, color) {
+                    this.x = x;
+                    this.y = y;
+                    this.r = Math.random() * 2 + 1;
+                    this.vel = { x: (Math.random() - 0.5) * 3, y: (Math.random() - 0.5) * 3 };
+                    this.lifespan = 50;
+                    this.color = color;
+                }
+                draw() {
+                    ctx.fillStyle = this.color;
+                    ctx.globalAlpha = this.lifespan / 50;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1.0;
+                }
+                update() {
+                    this.x += this.vel.x;
+                    this.y += this.vel.y;
+                    this.lifespan--;
+                }
+            }
+            
+            function createExplosion(x, y, count, color) {
+                for (let i = 0; i < count; i++) {
+                    G.game.particles.push(new Particle(x, y, color));
+                }
+            }
+
+            function checkCollisions() {
+                const { ship, asteroids, bullets } = G.game;
+                
+                for (let i = bullets.length - 1; i >= 0; i--) {
+                    for (let j = asteroids.length - 1; j >= 0; j--) {
+                        const b = bullets[i];
+                        const a = asteroids[j];
+                        if (Math.hypot(b.x - a.x, b.y - a.y) < a.r + b.r) {
+                            a.hp -= b.damage;
+                            createExplosion(b.x, b.y, 5, '#0f0');
+                            bullets.splice(i, 1);
+                            
+                            if (a.hp <= 0) {
+                                createExplosion(a.x, a.y, a.r, '#fff');
+                                const currentSpeed = Math.hypot(a.vel.x, a.vel.y);
+                                const currentAngle = Math.atan2(a.vel.y, a.vel.x);
+
+                                if (a.size === 'large') {
+                                    for (let k = 0; k < 2; k++) {
+                                        const angle = currentAngle + (Math.random() - 0.5) * 1.5;
+                                        const newVel = { x: Math.cos(angle) * currentSpeed * 1.2, y: Math.sin(angle) * currentSpeed * 1.2 };
+                                        asteroids.push(new Asteroid(G.game.currentLevel.waveConfig.asteroidHp, G.game.currentLevel.waveConfig.asteroidSpeed, 'medium', a.x, a.y, newVel));
+                                    }
+                                } else if (a.size === 'medium') {
+                                    for (let k = 0; k < 2; k++) {
+                                        const angle = currentAngle + (Math.random() - 0.5) * 1.5;
+                                        const newVel = { x: Math.cos(angle) * currentSpeed * 1.5, y: Math.sin(angle) * currentSpeed * 1.5 };
+                                        asteroids.push(new Asteroid(G.game.currentLevel.waveConfig.asteroidHp, G.game.currentLevel.waveConfig.asteroidSpeed, 'small', a.x, a.y, newVel));
+                                    }
+                                }
+                                asteroids.splice(j, 1);
+                            }
+                            break;
+                        }
+                    }
+                }
+                
+                for(let i = asteroids.length - 1; i >= 0; i--) {
+                    const a = asteroids[i];
+                    if (ship && Math.hypot(ship.x - a.x, ship.y - a.y) < ship.r + a.r) {
+                        ship.takeDamage(a.damage);
+                        createExplosion(a.x, a.y, a.r, '#f00');
+                        asteroids.splice(i, 1);
+                    }
+                }
+            }
+
+            function gameLoop() {
+                if (!G.game.isActive) return;
+
+                if(G.game.ship) {
+                    DOM.shipHpBar.style.width = `${(G.game.ship.hp / G.game.ship.maxHp) * 100}%`;
+                    const heatPercent = (G.game.ship.heat / G.game.ship.maxHeat) * 100;
+                    DOM.shipHeatBar.style.width = `${heatPercent}%`;
+                    if (G.game.ship.isOverheated) {
+                        DOM.heatBarContainer.classList.add('animate-pulse');
+                        DOM.heatBarText.textContent = 'OVERHEATED';
+                        DOM.shipHeatBar.classList.remove('from-orange-400', 'to-red-600');
+                        DOM.shipHeatBar.classList.add('from-yellow-400', 'to-orange-500');
+                    } else {
+                        DOM.heatBarContainer.classList.remove('animate-pulse');
+                        DOM.heatBarText.textContent = 'HEAT';
+                        DOM.shipHeatBar.classList.add('from-orange-400', 'to-red-600');
+                        DOM.shipHeatBar.classList.remove('from-yellow-400', 'to-orange-500');
+                    }
+                    
+                    if (G.game.ship.special) {
+                        const specialPercent = (G.game.ship.specialCharge / G.game.ship.maxSpecialCharge) * 100;
+                        const isReady = specialPercent >= 100;
+                        DOM.shipSpecialBar.style.width = `${specialPercent}%`;
+                        DOM.specialBarText.textContent = isReady ? "TAP TO USE" : G.game.ship.special.name.toUpperCase();
+                        DOM.specialBarContainer.classList.toggle('special-ready', isReady);
+                    } else {
+                         DOM.shipSpecialBar.style.width = '0%';
+                         DOM.specialBarText.textContent = "NO SPECIAL";
+                         DOM.specialBarContainer.classList.remove('special-ready');
+                    }
+                    DOM.cooldownCharges.textContent = G.game.cooldownCharges;
+                    DOM.cooldownButton.classList.toggle('opacity-50', G.game.cooldownCharges === 0);
+                }
+                
+                if(G.game.ship) G.game.ship.update(G.game.asteroids, G.game.bullets);
+                G.game.asteroids.forEach(a => a.update());
+                G.game.bullets.forEach(b => b.update());
+                G.game.particles.forEach(p => p.update());
+                
+                G.game.bullets = G.game.bullets.filter(b => b.lifespan > 0 && b.x > -10 && b.x < canvas.width + 10 && b.y > -10 && b.y < canvas.height + 10);
+                G.game.particles = G.game.particles.filter(p => p.lifespan > 0);
+
+                checkCollisions();
+                
+                if (G.game.asteroids.length === 0 && G.game.isActive) {
+                    nextWave();
+                }
+
+                ctx.fillStyle = '#0c0a18';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                if(G.game.ship) G.game.ship.draw();
+                G.game.asteroids.forEach(a => a.draw());
+                G.game.bullets.forEach(b => b.draw());
+                G.game.particles.forEach(p => p.draw());
+
+                G.game.loopId = requestAnimationFrame(gameLoop);
+            }
+
+            // --- INITIALIZATION ---
+            function init() {
+                // Only set up splash screen listener initially
+                setupEventListeners();
+            }
+
+            init();
+        });
+    </script>
+</body>
+</html>
+
