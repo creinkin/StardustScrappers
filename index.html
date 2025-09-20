@@ -1643,7 +1643,7 @@
                     }
                 }
                 // If no loot dropped from the table, guarantee a common item.
-                const commonItemPool = Object.keys(G.items).filter(id => G.items[id].rarity === 'common' && (G.items[id].type === 'weapon' || G.items[id].type === 'shield' || G.items[id].type === 'core'));
+                const commonItemPool = Object.keys(G.items).filter(id => G.items[id].rarity === 'common' && ['weapon', 'shield', 'core', 'tactic', 'special'].includes(G.items[id].type));
                 const randomCommonId = commonItemPool[Math.floor(Math.random() * commonItemPool.length)];
                 return { ...G.items[randomCommonId], uniqueId: generateItemId(), level: 1, isBonus };
             }
