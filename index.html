@@ -666,11 +666,6 @@
                         if (!G.player.equipped) {
                             G.player.equipped = { weapon: null, shield: null, core: null, tactic: null, special: null };
                         }
-                        // Migration for old "engine" slot
-                        if (G.player.equipped.engine) {
-                            G.player.equipped.core = G.player.equipped.engine;
-                            delete G.player.equipped.engine;
-                        }
                     }
                 } catch (e) {
                     console.error("Failed to load game state:", e);
@@ -780,6 +775,44 @@
                     // Add and auto-equip the starting special
                     const startingSpecial = { ...G.items['sp_000'], uniqueId: generateItemId(), level: 1 };
                     G.player.equipped.special = startingSpecial;
+                }
+            }
+
+            // --- MIGRATION FOR OLD SAVE DATA ---
+            function migratePlayerData() {
+                const findItemIdByName = (name) => {
+                    for (const id in G.items) {
+                        if (G.items[id].name === name) {
+                            return id;
+                        }
+                    }
+                    return null;
+                };
+
+                const migrateItem = (item) => {
+                    if (!item) return item;
+                    // Add item.id if it's missing (for stacking)
+                    if (!item.id) {
+                        item.id = findItemIdByName(item.name);
+                    }
+                    // Change old 'engine' type to 'core'
+                    if (item.type === 'engine') {
+                        item.type = 'core';
+                    }
+                    return item;
+                };
+
+                G.player.inventory = G.player.inventory.map(migrateItem);
+                
+                for (const slot in G.player.equipped) {
+                    if(G.player.equipped[slot]) {
+                        G.player.equipped[slot] = migrateItem(G.player.equipped[slot]);
+                    }
+                }
+                 // Special migration for the equipped object's slot name
+                if (G.player.equipped.engine) {
+                    G.player.equipped.core = G.player.equipped.engine;
+                    delete G.player.equipped.engine;
                 }
             }
 
@@ -1448,6 +1481,7 @@
                     // Start game logic only after splash is dismissed
                     loadGame();
                     initializeData();
+                    migratePlayerData(); // Ensure old save data is compatible
                     setupDelayedEventListeners();
                     updateAllUI();
                     updateEnergy();
@@ -2276,3 +2310,4 @@
     </script>
 </body>
 </html>
+
