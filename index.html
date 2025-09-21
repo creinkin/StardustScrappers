@@ -607,12 +607,16 @@
                     el: $('#crafting-modal'),
                     tabRecipes: $('#craft-tab-recipes'),
                     tabRefine: $('#craft-tab-refine'),
+                    tabRecycle: $('#craft-tab-recycle'),
                     panelRecipes: $('#craft-panel-recipes'),
                     panelRefine: $('#craft-panel-refine'),
+                    panelRecycle: $('#craft-panel-recycle'),
                     recipeList: $('#recipe-list'),
                     recipeDetails: $('#recipe-details'),
                     refineList: $('#refine-list'),
                     refineDetails: $('#refine-details'),
+                    recycleList: $('#recycle-list'),
+                    recycleDetails: $('#recycle-details'),
                     closeBtn: $('#close-crafting-modal'),
                 },
                 lootModal: {
@@ -691,6 +695,10 @@
             };
 
             const generateItemId = () => `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+            function getXpForNextLevel(level) {
+                return Math.floor(100 * Math.pow(1.2, level - 1));
+            }
 
             // --- SAVE/LOAD ---
             function saveGame() {
@@ -2265,6 +2273,7 @@
                                 const currentAngle = Math.atan2(a.vel.y, a.vel.x);
                                 
                                 if (a.size === 'small') {
+                                    G.game.smallAsteroidsDestroyed++;
                                     const coins = Math.floor(Math.random() * (G.game.currentLevel.id * 2)) + G.game.currentLevel.id;
                                     const materials = Math.random() < 0.3 ? 1 : 0; // Increased chance
                                     if (coins > 0) {
@@ -2383,5 +2392,4 @@
     </script>
 </body>
 </html>
-
 
