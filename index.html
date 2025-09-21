@@ -216,21 +216,30 @@
     <div id="app-container" class="w-full h-screen max-w-lg mx-auto p-4 flex flex-col opacity-0 transition-opacity duration-500">
 
         <!-- Header -->
-        <header class="glass-panel p-2 mb-4 flex justify-between items-center text-lg">
-            <div class="flex items-center gap-4">
-                <div class="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3.5 4.5 1.1 1.2 2.3 2.3a1 1 0 0 0 1.4 0l5.5-5.5a1 1 0 0 1 1.4 0l5.5 5.5a1 1 0 0 0 1.4 0l2.3-2.3 1.1-1.2"/></svg>
-                    <span id="player-coins" class="font-orbitron">1000</span>
+        <header class="glass-panel p-2 mb-4 flex flex-col gap-2">
+            <div class="flex justify-between items-center text-lg w-full">
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3.5 4.5 1.1 1.2 2.3 2.3a1 1 0 0 0 1.4 0l5.5-5.5a1 1 0 0 1 1.4 0l5.5 5.5a1 1 0 0 0 1.4 0l2.3-2.3 1.1-1.2"/></svg>
+                        <span id="player-coins" class="font-orbitron">1000</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 1.9a7 7 0 0 0-5 2.2 7 7 0 0 0-2.2 5L3 12l1.9-1.9a7 7 0 0 1 2.2-5 7 7 0 0 1 5-2.2L12 3Z"/><path d="m12 21 1.9-1.9a7 7 0 0 0 5-2.2 7 7 0 0 0 2.2-5L21 12l-1.9 1.9a7 7 0 0 1-2.2 5 7 7 0 0 1-5 2.2L12 21Z"/></svg>
+                        <span id="player-materials" class="font-orbitron">100</span>
+                    </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 1.9a7 7 0 0 0-5 2.2 7 7 0 0 0-2.2 5L3 12l1.9-1.9a7 7 0 0 1 2.2-5 7 7 0 0 1 5-2.2L12 3Z"/><path d="m12 21 1.9-1.9a7 7 0 0 0 5-2.2 7 7 0 0 0 2.2-5L21 12l-1.9 1.9a7 7 0 0 1-2.2 5 7 7 0 0 1-5 2.2L12 21Z"/></svg>
-                    <span id="player-materials" class="font-orbitron">100</span>
+                <div class="flex items-center gap-2 text-xl relative">
+                    <span id="player-energy" class="font-orbitron">100</span> / <span id="player-max-energy" class="font-orbitron">100</span>
+                    <button id="refill-energy-button" class="bg-purple-500/50 rounded-full w-6 h-6 flex items-center justify-center text-lg font-bold hover:bg-purple-500/80 transition-colors">+</button>
+                     <div id="energy-timer" class="absolute -bottom-3 right-0 text-xs text-purple-300 font-mono whitespace-nowrap"></div>
                 </div>
             </div>
-            <div class="flex items-center gap-2 text-xl relative">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-2"/><path d="M12 16v-2"/><path d="M12 8V6"/><path d="M15.5 12.5a3.5 3.5 0 0 0-5 0"/><path d="M17 16a6 6 0 0 0-8 0"/><path d="M18.5 19.5a8.5 8.5 0 0 0-11 0"/></svg>
-                <span id="player-energy" class="font-orbitron">100</span> / <span id="player-max-energy" class="font-orbitron">100</span>
-                 <div id="energy-timer" class="absolute -bottom-3 right-0 text-xs text-purple-300 font-mono whitespace-nowrap"></div>
+            <div class="w-full flex items-center gap-2 text-sm pt-2">
+                <span id="captain-level-display" class="font-orbitron font-bold bg-yellow-500 text-black px-2 py-0.5 rounded">LVL 1</span>
+                <div class="w-full bg-black/50 rounded-full h-4 border border-gray-600 relative overflow-hidden">
+                    <div id="captain-xp-bar" class="absolute top-0 left-0 h-full bg-gradient-to-r from-yellow-400 to-orange-500 transition-all duration-300" style="width: 0%;"></div>
+                    <div id="captain-xp-text" class="absolute inset-0 text-center text-xs font-bold text-white/90 tracking-wider leading-4">0 / 100 XP</div>
+                </div>
             </div>
         </header>
 
@@ -379,6 +388,7 @@
                 <div class="flex-shrink-0 bg-black/20 rounded-lg p-1 flex justify-center mb-4">
                     <button id="craft-tab-recipes" class="tab-btn active flex-1 text-center font-orbitron py-2 rounded-md">RECIPES</button>
                     <button id="craft-tab-refine" class="tab-btn flex-1 text-center font-orbitron py-2 rounded-md">REFINE</button>
+                    <button id="craft-tab-recycle" class="tab-btn flex-1 text-center font-orbitron py-2 rounded-md">RECYCLE</button>
                 </div>
                 <div class="flex-grow flex gap-4 overflow-hidden">
                     <!-- Recipe Panel -->
@@ -397,6 +407,15 @@
                         </div>
                         <div id="refine-details" class="w-2/3 flex flex-col items-center justify-center text-center">
                             <p class="text-gray-400">Select an item group to refine.</p>
+                        </div>
+                    </div>
+                    <!-- Recycle Panel -->
+                    <div id="craft-panel-recycle" class="w-full flex gap-4 hidden">
+                        <div id="recycle-list" class="w-1/3 flex flex-col gap-2 overflow-y-auto pr-2 border-r border-purple-500/50">
+                            <!-- Recycle options populated by JS -->
+                        </div>
+                        <div id="recycle-details" class="w-2/3 flex flex-col items-center justify-center text-center">
+                            <p class="text-gray-400">Select an item to recycle.</p>
                         </div>
                     </div>
                 </div>
@@ -419,6 +438,19 @@
             </div>
         </div>
         
+        <!-- Level Up Modal -->
+        <div id="level-up-modal" class="modal fixed inset-0 bg-black bg-opacity-80 justify-center items-center p-4 z-[80]">
+            <div class="modal-content glass-panel p-8 rounded-lg w-full max-w-sm text-center">
+                <h2 class="font-orbitron text-4xl mb-2 text-yellow-300" style="text-shadow: 0 0 10px #f59e0b;">LEVEL UP!</h2>
+                <p class="text-lg mb-6">You have reached Captain Level <span id="level-up-new-level" class="font-bold text-xl text-yellow-300"></span>!</p>
+                <h3 class="font-orbitron text-xl mt-4 mb-2">Rewards</h3>
+                <div id="level-up-rewards" class="text-left bg-black/20 p-4 rounded-lg space-y-2">
+                    <!-- Rewards populated by JS -->
+                </div>
+                <button id="level-up-close" class="btn-primary mt-8 py-2 rounded-lg font-orbitron w-full">CONTINUE</button>
+            </div>
+        </div>
+
         <!-- Confirm Modal -->
         <div id="confirm-modal" class="modal fixed inset-0 bg-black bg-opacity-70 justify-center items-center p-4 z-[70]">
             <div class="modal-content glass-panel p-6 rounded-lg w-full max-w-sm text-center">
@@ -444,8 +476,10 @@
                 player: {
                     coins: 1000,
                     materials: 100,
-                    energy: 100,
-                    maxEnergy: 100,
+                    energy: 50,
+                    maxEnergy: 50,
+                    captainLevel: 1,
+                    captainXp: 0,
                     unlockedLevel: 1,
                     lastEnergyTimestamp: null,
                     inventory: [],
@@ -474,7 +508,9 @@
                     particles: [],
                     floatingTexts: [],
                     pendingLoot: [],
+                    pendingLevelUps: [],
                     cooldownCharges: 0,
+                    smallAsteroidsDestroyed: 0,
                     currentLevel: null,
                     currentWave: 0,
                     loopId: null,
@@ -506,6 +542,10 @@
                 energy: $('#player-energy'),
                 maxEnergy: $('#player-max-energy'),
                 energyTimer: $('#energy-timer'),
+                refillEnergyBtn: $('#refill-energy-button'),
+                captainLevelDisplay: $('#captain-level-display'),
+                captainXpBar: $('#captain-xp-bar'),
+                captainXpText: $('#captain-xp-text'),
                 // Tabs
                 tabs: {
                     mapBtn: $('#tab-map-btn'),
@@ -581,6 +621,12 @@
                     summary: $('#loot-summary'),
                     grid: $('#loot-grid'),
                     closeBtn: $('#close-loot-modal'),
+                },
+                 levelUpModal: {
+                    el: $('#level-up-modal'),
+                    newLevel: $('#level-up-new-level'),
+                    rewards: $('#level-up-rewards'),
+                    closeBtn: $('#level-up-close'),
                 },
                 confirmModal: {
                     el: $('#confirm-modal'),
@@ -822,6 +868,12 @@
                 DOM.materials.textContent = G.player.materials;
                 DOM.energy.textContent = G.player.energy;
                 DOM.maxEnergy.textContent = G.player.maxEnergy;
+
+                const nextXp = getXpForNextLevel(G.player.captainLevel);
+                const currentXp = G.player.captainXp;
+                DOM.captainLevelDisplay.textContent = `LVL ${G.player.captainLevel}`;
+                DOM.captainXpText.textContent = `${currentXp} / ${nextXp} XP`;
+                DOM.captainXpBar.style.width = `${(currentXp / nextXp) * 100}%`;
             }
 
             function getStatWithLevel(item, stat) {
@@ -849,6 +901,9 @@
                     finalStats.heatPerShot = getStatWithLevel(G.player.equipped.weapon, 'heat');
                 }
                 
+                // Clamp fire rate to a minimum to prevent negative/zero values breaking the cooldown.
+                finalStats.fireRate = Math.max(0.25, finalStats.fireRate);
+
                 DOM.shipHp.textContent = Math.round(finalStats.hp);
                 DOM.shipDmg.textContent = Math.round(finalStats.damage);
                 DOM.shipFirerate.textContent = finalStats.fireRate.toFixed(1);
@@ -1518,6 +1573,24 @@
                     openModal(DOM.confirmModal, 'RESET PROGRESS', 'All your items, currency, and level progress will be permanently deleted. Are you sure?', () => {
                         localStorage.removeItem('stardustScrappersSave');
                         window.location.reload();
+                    });
+                });
+                
+                DOM.refillEnergyBtn.addEventListener('click', () => {
+                    const cost = 1000;
+                    if (G.player.energy >= G.player.maxEnergy) {
+                        showToast("Energy is already full!", "error");
+                        return;
+                    }
+                    if (G.player.coins < cost) {
+                        showToast(`Not enough coins! Need ${cost}.`, "error");
+                        return;
+                    }
+                    openModal(DOM.confirmModal, 'REFILL ENERGY', `Spend ${cost} coins to completely refill your energy?`, () => {
+                        G.player.coins -= cost;
+                        G.player.energy = G.player.maxEnergy;
+                        showToast('Energy Refilled!', 'success');
+                        updateAllUI();
                     });
                 });
                 
@@ -2310,4 +2383,5 @@
     </script>
 </body>
 </html>
+
 
